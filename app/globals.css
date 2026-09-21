@@ -1,26 +1,279 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* ── accents ─────────────────────────────── */
+  --color-amber: #ff6b00;
+  --color-amber-deep: #e85000;
+  --color-amber-gold: #ffaa33;
+  --color-terminal: #00ff41;
+  --color-screen: #0ff0aa;
+  --color-danger: #cc2200;
+
+  /* ── surfaces ────────────────────────────── */
+  --color-ink: #0d1012;
+  --color-base: #161c20;
+  --color-card: #1e2830;
+  --color-surface: #253240;
+  --color-edge: #3d4a50;
+
+  /* ── text ────────────────────────────────── */
+  --color-cream: #f5efe6;
+  --color-muted: #b8a898;
+
+  /* ── effects ─────────────────────────────── */
+  --color-amber-tint: rgba(255, 107, 0, 0.12);
+  --color-term-dim: #5a6a72;
+
+  /* ── typography ──────────────────────────── */
+  --font-display: var(--font-space-grotesk), sans-serif;
+  --font-sans: var(--font-inter), sans-serif;
+  --font-mono: var(--font-jetbrains-mono), monospace;
+
+  /* ── radii ───────────────────────────────── */
+  --radius-sm: 4px;
+  --radius-md: 8px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@keyframes hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ── loading screen (app/loading.tsx) ─── */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes core-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.6;
+  }
+}
+@keyframes matrix-fall {
+  0% {
+    transform: translateY(-100%);
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+@keyframes block-light {
+  0%,
+  100% {
+    background: var(--color-surface);
+    box-shadow: none;
+    opacity: 0.4;
+  }
+  50% {
+    background: var(--color-amber);
+    box-shadow: 0 0 8px var(--color-amber);
+    opacity: 1;
+  }
+}
+@keyframes wave-bounce {
+  0%,
+  100% {
+    transform: scaleY(0.4);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+@keyframes glow-pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.15);
+  }
+}
+@keyframes logo-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-ink text-cream font-sans antialiased;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  ::selection {
+    background: var(--color-amber);
+    color: var(--color-ink);
+  }
+
+  /* thin terminal scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--color-ink);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-surface);
+    border-radius: 5px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-amber-deep);
+  }
+}
+
+@layer components {
+  /* ── layout primitives ─────────────────────── */
+  .container-x {
+    @apply mx-auto w-full max-w-[1280px] px-5 min-[560px]:px-8;
+  }
+
+  .section-pad {
+    @apply py-[72px] min-[860px]:py-[104px];
+  }
+
+  /* ── faint engineering grid (hero bg) ─────── */
+  .bg-grid-faint {
+    background-image:
+      linear-gradient(var(--color-base) 1px, transparent 1px),
+      linear-gradient(90deg, var(--color-base) 1px, transparent 1px);
+    background-size: 48px 48px;
+    opacity: 0.35;
+    mask-image: radial-gradient(ellipse 80% 70% at 30% 30%, black 30%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 70% at 30% 30%, black 30%, transparent 75%);
+  }
+
+  /* ── section heading system ────────────────── */
+  .section-label {
+    @apply mb-3.5 inline-flex items-center gap-2.5 font-mono text-[13px] font-medium tracking-wide text-terminal;
+  }
+  .section-label::before {
+    content: "$";
+    color: var(--color-amber);
+  }
+  .section-label::after {
+    content: "";
+    @apply h-px w-10 bg-edge;
+  }
+
+  .section-heading {
+    @apply mb-4 font-display text-[clamp(28px,3.4vw,40px)] font-bold leading-[1.15];
+  }
+
+  .section-sub {
+    @apply mb-12 max-w-[560px] text-muted;
+  }
+
+  /* ── buttons ───────────────────────────────── */
+  .btn {
+    @apply inline-flex items-center gap-2 rounded-md border border-transparent px-[26px] py-[13px] font-mono text-sm font-medium transition-colors duration-150;
+  }
+  .btn-primary {
+    @apply bg-amber text-ink hover:bg-amber-gold;
+  }
+  .btn-ghost {
+    @apply border-edge bg-transparent text-cream hover:border-amber hover:bg-amber-tint;
+  }
+
+  /* ── cards ─────────────────────────────────── */
+  .card {
+    @apply rounded-md border border-edge bg-card;
+  }
+  .card-hover {
+    @apply transition-colors duration-150 hover:border-amber hover:bg-amber-tint;
+  }
+
+  /* ── reveal-on-load motion (the ONE motion) ── */
+  .hero-reveal {
+    animation: hero-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .reveal-d1 {
+    animation-delay: 0.1s;
+  }
+  .reveal-d2 {
+    animation-delay: 0.22s;
+  }
+  .reveal-d3 {
+    animation-delay: 0.34s;
+  }
+  .reveal-d4 {
+    animation-delay: 0.46s;
+  }
+
+  /* ── terminal ──────────────────────────────── */
+  .term-body {
+    @apply overflow-x-auto whitespace-pre p-[22px] font-mono text-[13px] leading-[1.9] text-muted;
+  }
+  .tok-c {
+    color: var(--color-term-dim);
+  }
+  .tok-k {
+    color: var(--color-amber-gold);
+  }
+  .tok-s {
+    color: var(--color-screen);
+  }
+  .tok-f {
+    color: var(--color-cream);
+  }
+  .tok-n {
+    color: var(--color-terminal);
+  }
+
+  .cursor-blink {
+    @apply inline-block h-[15px] w-2 bg-terminal align-[-2px];
+    animation: blink 1.1s step-end infinite;
+  }
 }
