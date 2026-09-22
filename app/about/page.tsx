@@ -1,12 +1,27 @@
 import type { Metadata } from "next";
 import ContactStrip from "@/components/contact-strip";
+import PortableBody from "@/components/portable-body";
 import Terminal from "@/components/terminal";
+import { getAboutPage } from "@/lib/about-page";
 
-export const metadata: Metadata = {
-  title: "About — Hamza Elmouddane",
-  description:
-    "Backend & AI Engineer based in Morocco. Self-taught, production-obsessed, building systems that last.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const about = await getAboutPage();
+  const seo = about?.seo;
+  return {
+    title: seo?.metaTitle ?? "About — Hamza Elmouddane",
+    description:
+      seo?.metaDescription ??
+      "Backend & AI Engineer based in Morocco. Self-taught, production-obsessed, building systems that last.",
+    alternates: seo?.canonicalUrl ? { canonical: seo.canonicalUrl } : undefined,
+    robots: seo?.noIndex ? { index: false, follow: false } : undefined,
+    openGraph: {
+      title: seo?.ogTitle ?? seo?.metaTitle ?? "About — Hamza Elmouddane",
+      description: seo?.ogDescription ?? seo?.metaDescription ?? undefined,
+      url: seo?.canonicalUrl ?? undefined,
+      images: seo?.ogImage?.asset?.url ? [{ url: seo.ogImage.asset.url }] : undefined,
+    },
+  };
+}
 
 const TIMELINE = [
   {
@@ -140,7 +155,11 @@ function WhoAmI() {
   );
 }
 
-export default function About() {
+export default async function About() {
+  const about = await getAboutPage();
+  const biography = about?.biography?.length ? about.biography : null;
+  const location = about?.location ?? "Morocco";
+
   return (
     <>
       {/* ── ABOUT HERO ─────────────────────────────── */}
@@ -152,14 +171,18 @@ export default function About() {
               <span className="text-amber">~/hamza $</span> cat about.md
             </p>
             <h1 className="hero-reveal reveal-d1 mb-[20px] font-display text-[clamp(36px,4vw,56px)] font-bold leading-[1.08] tracking-tight">
-              ABOUT <span className="text-amber">ME.</span>
+              {(about?.title ?? "ABOUT ME.").toUpperCase()}
             </h1>
             <p className="hero-reveal reveal-d2 mb-[32px] max-w-[580px] text-[17px] leading-[1.7] text-muted">
-              <strong className="font-semibold text-cream">
-                Self-taught Backend &amp; AI Engineer
-              </strong>{" "}
-              building systems that run in the dark — invisible, reliable, fast. Based in
-              Morocco 🇲🇦, obsessed with the internals no one talks about.
+              {about?.introduction ?? (
+                <>
+                  <strong className="font-semibold text-cream">
+                    Self-taught Backend &amp; AI Engineer
+                  </strong>{" "}
+                  building systems that run in the dark — invisible, reliable, fast. Based in
+                  Morocco 🇲🇦, obsessed with the internals no one talks about.
+                </>
+              )}
             </p>
             <div className="hero-reveal reveal-d3 flex flex-wrap items-center gap-4">
               <span className="inline-flex items-center gap-2 rounded-full border border-edge bg-card px-3.5 py-[7px] font-mono text-xs text-muted">
@@ -181,7 +204,7 @@ export default function About() {
                   <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0Z" />
                   <circle cx="12" cy="10" r="3" />
                 </svg>
-                Morocco 🇲🇦
+                {location} 🇲🇦
               </span>
               <span className="inline-flex items-center gap-2 rounded-full border border-edge bg-card px-3.5 py-[7px] font-mono text-xs text-muted">
                 <svg
@@ -205,23 +228,32 @@ export default function About() {
 
           <div className="hero-reveal reveal-d2 w-full max-w-[320px] flex-shrink-0 overflow-hidden rounded-md border border-edge bg-card lg:w-[260px]">
             <div className="flex h-[280px] w-full items-center justify-center bg-surface">
-              <div className="flex flex-col items-center gap-3 font-mono text-xs text-muted">
-                <svg
-                  width="48"
-                  height="48"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="text-edge"
-                >
-                  <circle cx="12" cy="8" r="4" />
-                  <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-                </svg>
-                <span>profileImage</span>
-              </div>
+              {about?.profileImage?.asset?.url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={about.profileImage.asset.url}
+                  alt={about.profileImage.alt ?? "Hamza Elmouddane"}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex flex-col items-center gap-3 font-mono text-xs text-muted">
+                  <svg
+                    width="48"
+                    height="48"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-edge"
+                  >
+                    <circle cx="12" cy="8" r="4" />
+                    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+                  </svg>
+                  <span>profileImage</span>
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-2 border-t border-edge px-4 py-3.5 font-mono text-[11px] text-muted">
               <svg
@@ -240,7 +272,7 @@ export default function About() {
               </svg>
               <span>
                 <span className="text-[13px] font-semibold text-cream">Hamza Elmouddane</span>
-                &nbsp;·&nbsp; Morocco 🇲🇦
+                &nbsp;·&nbsp; {location} 🇲🇦
               </span>
             </div>
           </div>
@@ -253,6 +285,11 @@ export default function About() {
           <div>
             <p className="section-label hero-reveal">cat biography.md</p>
             <h2 className="section-heading hero-reveal reveal-d1">The Long Version</h2>
+            {biography ? (
+              <div className="hero-reveal reveal-d2 [&_p]:text-[15px] [&_p]:leading-[1.8]">
+                <PortableBody body={biography} />
+              </div>
+            ) : (
             <div className="hero-reveal reveal-d2 space-y-5 text-[15px] leading-[1.8] text-muted">
               <p>
                 I&apos;m <strong className="text-cream">Hamza Elmouddane</strong> — a
@@ -283,6 +320,7 @@ export default function About() {
                 to distributed systems engineer.
               </p>
             </div>
+            )}
           </div>
 
           <aside className="flex flex-col gap-5">
