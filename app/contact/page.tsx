@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import ContactForm from "@/components/contact-form";
 import ContactEmailLink from "@/components/contact-email-link";
+import ShinyText from "@/components/shiny-text";
 
 export const metadata: Metadata = {
   title: "Contact — Hamza Elmouddane",
@@ -31,7 +32,7 @@ export default function Contact() {
             <span className="text-amber">~/hamza $</span> ./contact --open-channel
           </p>
           <h1 className="hero-reveal reveal-d1 mb-[20px] font-display text-[clamp(38px,5vw,64px)] font-bold leading-[1.06] tracking-[-0.015em]">
-            LET&apos;S BUILD <span className="text-amber">SOMETHING.</span>
+            LET&apos;S BUILD <ShinyText text="SOMETHING." color="#FF6B00" speed={2} />
           </h1>
           <p className="hero-reveal reveal-d2 mb-[32px] max-w-[620px] text-[17px] leading-[1.7] text-muted">
             Have a backend system, AI pipeline, SaaS product, or technical problem that needs

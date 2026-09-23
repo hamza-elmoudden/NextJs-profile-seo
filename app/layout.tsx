@@ -4,6 +4,8 @@ import BootScreen from "@/components/boot-screen";
 import Footer from "@/components/footer";
 import Navbar from "@/components/navbar";
 import ScrollToTop from "@/components/scroll-to-top";
+import { getSiteSettings } from "@/lib/site-settings";
+import StoreProvider from "@/components/store-provider";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -22,24 +24,39 @@ const jetBrainsMono = JetBrains_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Hamza Elmouddane — Backend & AI Engineer",
-  description:
-    "Backend & AI Engineer based in Morocco. NestJS · FastAPI · Go · TypeScript. I build systems. I ship backends. I engineer the invisible.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSiteSettings();
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+  return {
+    title: {
+      default: settings?.siteTitle ?? settings?.siteName ?? "Hamza Elmouddane — Backend & AI Engineer",
+      template: `%s — ${settings?.siteName ?? "Hamza Elmouddane"}`,
+    },
+    description:
+      settings?.siteDescription ??
+      "Backend & AI Engineer based in Morocco. NestJS · FastAPI · Go · TypeScript. I build systems. I ship backends. I engineer the invisible.",
+    openGraph: settings?.defaultOgImage?.asset.url
+      ? { images: [{ url: settings.defaultOgImage.asset.url }] }
+      : undefined,
+  };
+}
+
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const settings = await getSiteSettings();
+
   return (
     <html
       lang="en"
       className={`${spaceGrotesk.variable} ${inter.variable} ${jetBrainsMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
-        <BootScreen />
-        <ScrollToTop />
-        <Navbar />
-        <main className="flex-1">{children}</main>
-        <Footer />
+        <StoreProvider settings={settings}>
+          <BootScreen />
+          <ScrollToTop />
+          <Navbar navigation={settings?.navigation ?? []} />
+          <main className="flex-1">{children}</main>
+          <Footer />
+        </StoreProvider>
       </body>
     </html>
   );

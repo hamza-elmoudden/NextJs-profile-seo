@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
 import ContactStrip from "@/components/contact-strip";
 import PortableBody from "@/components/portable-body";
+import ShinyText from "@/components/shiny-text";
 import Terminal from "@/components/terminal";
 import { getAboutPage } from "@/lib/about-page";
+
+// ISR: revalidate this page every 30 minutes
+export const revalidate = 1800;
 
 export async function generateMetadata(): Promise<Metadata> {
   const about = await getAboutPage();
@@ -171,7 +175,7 @@ export default async function About() {
               <span className="text-amber">~/hamza $</span> cat about.md
             </p>
             <h1 className="hero-reveal reveal-d1 mb-[20px] font-display text-[clamp(36px,4vw,56px)] font-bold leading-[1.08] tracking-tight">
-              {(about?.title ?? "ABOUT ME.").toUpperCase()}
+              <ShinyText text={(about?.title ?? "ABOUT ME.").toUpperCase()} color="#FF6B00" speed={2} />
             </h1>
             <p className="hero-reveal reveal-d2 mb-[32px] max-w-[580px] text-[17px] leading-[1.7] text-muted">
               {about?.introduction ?? (
