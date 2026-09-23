@@ -5,7 +5,12 @@ import ContactStrip from "@/components/contact-strip";
 import PortableBody from "@/components/portable-body";
 import { getAllPostSlugs, getPostFullBySlug, type PostFull } from "@/lib/posts";
 
-export const dynamic = "force-dynamic";
+// ISR: statically generate all posts at build time, then revalidate each
+// page in the background at most every 60 seconds. dynamicParams (default
+// true, exported for clarity) lets slugs published after the build render
+// on first request and then be statically cached.
+export const revalidate = 60;
+export const dynamicParams = true;
 
 export async function generateStaticParams() {
   const slugs = await getAllPostSlugs();

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import BlogPosts from "@/components/blog-posts";
 import ContactStrip from "@/components/contact-strip";
+import ShinyText from "@/components/shiny-text";
 import { getCategories, getPostsPage } from "@/lib/blog-page";
 import { BLOG_POSTS } from "@/lib/content";
 import { getPostBySlug, getPosts, postToCard, type Post } from "@/lib/posts";
@@ -84,7 +85,14 @@ function FeaturedPost({ post }: { post?: Post | null }) {
         </Link>
       </div>
 
-      <div className="hidden min-h-[280px] items-center justify-center overflow-hidden border-t border-edge bg-surface p-8 lg:flex lg:border-l lg:border-t-0">
+      <div className="relative hidden min-h-[280px] items-center justify-center overflow-hidden border-t border-edge bg-surface lg:flex lg:border-l lg:border-t-0">
+        {post?.coverImage?.asset?.url ? (
+          <img
+            src={post.coverImage.asset.url}
+            alt={post.coverImage.alt ?? post?.title ?? "Featured post cover"}
+            className="h-full w-full object-cover"
+          />
+        ) : (
         <div className="relative max-w-[280px] overflow-hidden rounded-md border border-edge bg-card p-5 font-mono text-xs leading-[1.8] text-muted">
           <span className="tok-c">{"// saga.ts — the part no one shows you"}</span>
           {"\n"}
@@ -120,6 +128,7 @@ function FeaturedPost({ post }: { post?: Post | null }) {
           {"\n"}
           {"};"}
         </div>
+        )}
       </div>
     </article>
   );
@@ -205,7 +214,7 @@ export default async function Blog({
             <span className="text-amber">~/hamza $</span> tail -f writing.log
           </p>
           <h1 className="hero-reveal reveal-d1 mb-[18px] font-display text-[clamp(36px,4vw,56px)] font-bold leading-[1.08] tracking-tight">
-            THE <span className="text-amber">{heading.toUpperCase()}.</span>
+            THE <ShinyText text={`${heading.toUpperCase()}.`} color="#FF6B00" speed={2} />
           </h1>
           <p className="hero-reveal reveal-d2 mb-8 max-w-[560px] text-[17px] leading-[1.7] text-muted">
             {subheading}
@@ -230,6 +239,7 @@ export default async function Blog({
 
       {/* ── FILTERS + POSTS GRID ──────────────────── */}
       <BlogPosts
+        key={activeCategory}
         posts={filteredPosts}
         categories={
           categories.length > 0
