@@ -2,10 +2,44 @@ import ContactStrip from "@/components/contact-strip";
 import Hero from "@/components/hero";
 import { PostCard, ServiceCard, SkillCard } from "@/components/cards";
 import SectionHeader from "@/components/section-header";
+import ServicesSlider from "@/components/services-slider";
 import Link from "next/link";
 import { POSTS, SERVICES, SKILLS } from "@/lib/content";
+import { getFeaturedPosts } from "@/lib/posts";
+import { getServices } from "@/lib/services";
 
-export default function Home() {
+export default async function Home() {
+  let sanityServices: Awaited<ReturnType<typeof getServices>> = [];
+  let featuredPosts: Awaited<ReturnType<typeof getFeaturedPosts>> = [];
+  try {
+    sanityServices = await getServices();
+  } catch {
+    sanityServices = [];
+  }
+  try {
+    featuredPosts = await getFeaturedPosts();
+  } catch {
+    featuredPosts = [];
+  }
+  const services = sanityServices.length > 0 ? sanityServices : null;
+  const blogPosts =
+    featuredPosts.length > 0
+      ? featuredPosts.map((post) => ({
+          slug: post.slug,
+          tag: post.category?.slug ?? post.tags?.[0]?.slug ?? "post",
+          date: post.publishedAt
+            ? new Date(post.publishedAt).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })
+            : "draft",
+          readTime: "",
+          title: post.title,
+          excerpt: post.excerpt ?? "",
+        }))
+      : POSTS;
+
   return (
     <>
       <Hero />
@@ -18,10 +52,19 @@ export default function Home() {
             title="Services I Offer"
             sub="Not features. Not buzzwords. Capabilities I've shipped under real load, with real users, real failures, and real on-call nights."
           />
-          <div className="grid grid-cols-1 gap-5 min-[560px]:grid-cols-2 xl:grid-cols-4">
-            {SERVICES.map((service) => (
-              <ServiceCard key={service.title} {...service} />
-            ))}
+          {services ? (
+            <ServicesSlider services={services} />
+          ) : (
+            <div className="grid grid-cols-1 gap-5 min-[560px]:grid-cols-2 xl:grid-cols-4">
+              {SERVICES.map((service) => (
+                <ServiceCard key={service.title} {...service} />
+              ))}
+            </div>
+          )}
+          <div className="mt-10">
+            <Link href="/services" className="btn btn-ghost">
+              View All Services →
+            </Link>
           </div>
         </div>
       </section>
@@ -51,8 +94,8 @@ export default function Home() {
             sub="Notes from the internals — what I built, what broke, and what I'd never do again."
           />
           <div className="mb-10 grid grid-cols-1 gap-5 lg:grid-cols-3">
-            {POSTS.map((post) => (
-              <PostCard key={post.title} {...post} />
+            {blogPosts.map((post) => (
+              <PostCard key={post.slug} {...post} />
             ))}
           </div>
           <div>
