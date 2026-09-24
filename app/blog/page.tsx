@@ -186,24 +186,32 @@ export default async function Blog({
   const newsletterLabel = postsPage?.newsletterCtaLabel ?? "Get new articles in your inbox";
   const newsletterSubtext = postsPage?.newsletterCtaSubtext ?? "No spam. Unsubscribe any time.";
 
-  const jsonLd =
-    postsPage?.structuredDataName || postsPage?.structuredDataDescription
-      ? {
-          "@context": "https://schema.org",
-          "@type": "Blog",
-          name: postsPage.structuredDataName ?? "Blog — Hamza Elmouddane",
-          description:
-            postsPage.structuredDataDescription ??
-            "A blog about backend engineering, architecture, and building products.",
-        }
-      : null;
+  let jsonLdScript: string | null = null;
+  if (postsPage?.jsonLd) {
+    try {
+      JSON.parse(postsPage.jsonLd);
+      jsonLdScript = postsPage.jsonLd;
+    } catch {
+      jsonLdScript = null;
+    }
+  }
+  if (!jsonLdScript && (postsPage?.structuredDataName || postsPage?.structuredDataDescription)) {
+    jsonLdScript = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Blog",
+      name: postsPage.structuredDataName ?? "Blog — Hamza Elmouddane",
+      description:
+        postsPage.structuredDataDescription ??
+        "A blog about backend engineering, architecture, and building products.",
+    });
+  }
 
   return (
     <>
-      {jsonLd ? (
+      {jsonLdScript ? (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: jsonLdScript }}
         />
       ) : null}
       {/* ── BLOG HERO ─────────────────────────────── */}

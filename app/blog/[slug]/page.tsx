@@ -85,28 +85,36 @@ export default async function BlogPostPage({
   );
   const coverUrl = post.coverImage?.asset?.url;
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "BlogPosting",
-    headline: post.title,
-    description: post.excerpt ?? undefined,
-    datePublished: post.publishedAt ?? undefined,
-    dateModified: post.updatedAt ?? post.publishedAt ?? undefined,
-    image: coverUrl,
-    author: post.author
-      ? {
-          "@type": "Person",
-          name: post.author.name,
-        }
-      : undefined,
-  };
+  let jsonLdScript: string | null = null;
+  if (post.jsonLd) {
+    try {
+      JSON.parse(post.jsonLd);
+      jsonLdScript = post.jsonLd;
+    } catch {
+      jsonLdScript = null;
+    }
+  }
+  if (!jsonLdScript) {
+    jsonLdScript = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      headline: post.title,
+      description: post.excerpt ?? undefined,
+      datePublished: post.publishedAt ?? undefined,
+      dateModified: post.updatedAt ?? post.publishedAt ?? undefined,
+      image: coverUrl,
+      author: post.author
+        ? {
+            "@type": "Person",
+            name: post.author.name,
+          }
+        : undefined,
+    });
+  }
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript }} />
 
       {/* ── POST HERO ─────────────────────────────── */}
       <section className="relative overflow-hidden border-b border-edge py-[72px]">

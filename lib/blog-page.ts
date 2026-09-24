@@ -14,6 +14,7 @@ export interface PostsPage {
   twitterCard: "summary_large_image" | "summary" | null;
   structuredDataName: string | null;
   structuredDataDescription: string | null;
+  jsonLd: string | null;
   postsPerPage: number | null;
   showCategoryFilter: boolean | null;
   showTagFilter: boolean | null;
@@ -48,6 +49,7 @@ export const GET_POSTS_PAGE = `*[_type == "postsPage"][0] {
   twitterCard,
   structuredDataName,
   structuredDataDescription,
+  jsonLd,
   postsPerPage,
   showCategoryFilter,
   showTagFilter,
