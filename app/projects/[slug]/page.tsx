@@ -96,27 +96,35 @@ export default async function ProjectPage({
   const coverUrl = project.featuredImage?.asset?.url;
   const gallery = (project.gallery ?? []).filter((g) => g?.asset?.url);
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    name: project.title,
-    description: project.shortDescription,
-    applicationCategory: "DeveloperApplication",
-    operatingSystem: "Web",
-    author: {
-      "@type": "Person",
-      name: "Hamza Elmouddane",
-    },
-    url: project.liveUrl ?? undefined,
-    image: coverUrl,
-  };
+  let jsonLdScript: string | null = null;
+  if (project.jsonLd) {
+    try {
+      JSON.parse(project.jsonLd);
+      jsonLdScript = project.jsonLd;
+    } catch {
+      jsonLdScript = null;
+    }
+  }
+  if (!jsonLdScript) {
+    jsonLdScript = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      name: project.title,
+      description: project.shortDescription,
+      applicationCategory: "DeveloperApplication",
+      operatingSystem: "Web",
+      author: {
+        "@type": "Person",
+        name: "Hamza Elmouddane",
+      },
+      url: project.liveUrl ?? undefined,
+      image: coverUrl,
+    });
+  }
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript }} />
 
       {/* ── PROJECT HERO ──────────────────────────── */}
       <section className="relative overflow-hidden border-b border-edge py-[72px]">

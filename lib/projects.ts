@@ -28,6 +28,7 @@ export type SanityProject = {
 
 export type SanityProjectFull = SanityProject & {
   description: unknown[] | null;
+  jsonLd: string | null;
   gallery: SanityImage[] | null;
   seo: {
     metaTitle?: string;
@@ -113,6 +114,7 @@ export const GET_PROJECT_BY_SLUG = `
     githubUrl,
     liveUrl,
     description,
+    jsonLd,
     gallery[]{${IMAGE_FRAGMENT}},
     seo
   }
