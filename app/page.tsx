@@ -5,6 +5,7 @@ import SectionHeader from "@/components/section-header";
 import ServicesSlider from "@/components/services-slider";
 import Link from "next/link";
 import { POSTS, SERVICES, SKILLS } from "@/lib/content";
+import { getHomePage } from "@/lib/home-page";
 import { getFeaturedPosts } from "@/lib/posts";
 import { getServices } from "@/lib/services";
 
@@ -21,7 +22,38 @@ export default async function Home() {
   } catch {
     featuredPosts = [];
   }
+  let homePage: Awaited<ReturnType<typeof getHomePage>> = null;
+  try {
+    homePage = await getHomePage();
+  } catch {
+    homePage = null;
+  }
   const services = sanityServices.length > 0 ? sanityServices : null;
+
+  let jsonLdScript: string | null = null;
+  if (homePage?.jsonLd) {
+    try {
+      JSON.parse(homePage.jsonLd);
+      jsonLdScript = homePage.jsonLd;
+    } catch {
+      jsonLdScript = null;
+    }
+  }
+  if (!jsonLdScript) {
+    jsonLdScript = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: "Hamza Elmouddane — Backend & AI Engineer",
+      description:
+        "Portfolio of Hamza Elmouddane, a Backend & AI Engineer based in Morocco. NestJS, FastAPI, Go, TypeScript.",
+      author: {
+        "@type": "Person",
+        name: "Hamza Elmouddane",
+        jobTitle: "Backend & AI Engineer",
+        address: { "@type": "PostalAddress", addressCountry: "MA" },
+      },
+    });
+  }
   const blogPosts =
     featuredPosts.length > 0
       ? featuredPosts.map((post) => ({
@@ -42,6 +74,7 @@ export default async function Home() {
 
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript }} />
       <Hero />
 
       {/* ── SERVICES ─────────────────────────────── */}
