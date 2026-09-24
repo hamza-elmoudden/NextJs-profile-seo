@@ -134,6 +134,7 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
 export type PostFull = Post & {
   updatedAt: string | null;
   body: unknown[] | null;
+  jsonLd: string | null;
   author: (PostAuthor & {
     role: string | null;
     bio: unknown[] | null;
@@ -170,6 +171,7 @@ export const GET_POST_FULL_BY_SLUG = `
     updatedAt,
     featured,
     body,
+    jsonLd,
     author->{
       name,
       "slug": slug.current,

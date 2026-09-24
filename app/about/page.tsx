@@ -164,8 +164,21 @@ export default async function About() {
   const biography = about?.biography?.length ? about.biography : null;
   const location = about?.location ?? "Morocco";
 
+  let jsonLdScript: string | null = null;
+  if (about?.jsonLd) {
+    try {
+      JSON.parse(about.jsonLd);
+      jsonLdScript = about.jsonLd;
+    } catch {
+      jsonLdScript = null;
+    }
+  }
+
   return (
     <>
+      {jsonLdScript ? (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript }} />
+      ) : null}
       {/* ── ABOUT HERO ─────────────────────────────── */}
       <section className="relative overflow-hidden border-b border-edge py-[60px] min-[560px]:py-[72px] min-[860px]:py-[80px]">
         <div className="bg-grid-faint pointer-events-none absolute inset-0" aria-hidden />
