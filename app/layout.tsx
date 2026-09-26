@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import BootScreen from "@/components/boot-screen";
 import Footer from "@/components/footer";
 import Navbar from "@/components/navbar";
+import GlobalTerminal from "@/components/global-terminal/global-terminal";
 import ScrollToTop from "@/components/scroll-to-top";
 import { getSiteSettings } from "@/lib/site-settings";
 import StoreProvider from "@/components/store-provider";
@@ -53,6 +54,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <StoreProvider settings={settings}>
           <BootScreen />
           <ScrollToTop />
+          <GlobalTerminal settings={settings} />
           <Navbar navigation={settings?.navigation ?? []} />
           <main className="flex-1">{children}</main>
           <Footer />
