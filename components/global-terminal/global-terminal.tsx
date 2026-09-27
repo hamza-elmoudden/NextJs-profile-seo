@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import PortableBody from "@/components/portable-body";
 import TerminalInput from "@/components/global-terminal/terminal-input";
+import { formatHelpLines } from "@/components/global-terminal/terminal-commands";
 import { getAboutPage } from "@/lib/about-page";
 import type { Service, ServiceFull } from "@/lib/services";
 import { getServiceBySlug, getServices } from "@/lib/services";
@@ -25,12 +26,13 @@ type View = { id: string; lines: TermLine[] };
 const HELP_LINES: TermLine[] = [
   { kind: "out", text: "Available commands:", tone: "cream" },
   { kind: "out", text: "" },
-  { kind: "out", text: "  about        About me", tone: "muted" },
-  { kind: "out", text: "  services     List my services", tone: "muted" },
-  { kind: "out", text: "  skills       List my technical skills", tone: "muted" },
-  { kind: "out", text: "  contact      Contact information", tone: "muted" },
-  { kind: "out", text: "  clear        Clear terminal", tone: "muted" },
-  { kind: "out", text: "  close        Close terminal", tone: "muted" },
+  ...formatHelpLines().map(
+    (command): TermLine => ({
+      kind: "out",
+      text: `  ${command.name.padEnd(13)}${command.description}`,
+      tone: "muted",
+    }),
+  ),
 ];
 
 const RULE = "─".repeat(28);
@@ -69,15 +71,6 @@ export default function GlobalTerminal({ settings }: { settings: SiteSettings | 
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
   }, [lines]);
 
-  useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open]);
-
   const pushView = useCallback((id: string, viewLines: TermLine[]) => {
     setLines((prev) => [...prev, { kind: "out", text: "" }, ...viewLines]);
     setViewStack((prev) => [...prev, { id, lines: viewLines }]);
@@ -88,6 +81,11 @@ export default function GlobalTerminal({ settings }: { settings: SiteSettings | 
   }, []);
 
   const close = useCallback(() => setOpen(false), []);
+
+  const loadServiceSlugs = useCallback(async () => {
+    servicesCache.current ??= await getServices();
+    return servicesCache.current.map((service) => service.slug);
+  }, []);
 
   const runCommand = useCallback(
     async (raw: string) => {
@@ -373,6 +371,7 @@ export default function GlobalTerminal({ settings }: { settings: SiteSettings | 
               onEscape={close}
               onRecord={(command) => setHistory((prev) => [...prev, command])}
               history={history}
+              loadServiceSlugs={loadServiceSlugs}
             />
           </motion.div>
         ) : null}
