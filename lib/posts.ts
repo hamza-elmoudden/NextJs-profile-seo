@@ -204,12 +204,13 @@ export async function getPostFullBySlug(slug: string): Promise<PostFull | null> 
 
 export const GET_ALL_POST_SLUGS = `
   *[_type == "post" && defined(slug.current)] {
-    "slug": slug.current
+    "slug": slug.current,
+    "category": coalesce(category->slug.current, null)
   }
 `;
 
-export async function getAllPostSlugs(): Promise<{ slug: string }[]> {
-  return sanityClient.fetch<{ slug: string }[]>(
+export async function getAllPostSlugs(): Promise<{ slug: string; category: string | null }[]> {
+  return sanityClient.fetch<{ slug: string; category: string | null }[]>(
     GET_ALL_POST_SLUGS,
     {},
     POSTS_FETCH_OPTIONS,
