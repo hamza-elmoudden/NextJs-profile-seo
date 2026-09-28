@@ -22,7 +22,7 @@ const TYPE_BADGE: Record<string, string> = {
 
 function FeaturedProject({ project }: { project: Project }) {
   return (
-    <article className="card hero-reveal reveal-d1 mb-16 grid grid-cols-1 overflow-hidden transition-colors duration-150 hover:border-amber lg:grid-cols-[0.9fr_1.1fr]">
+    <article className="card hero-reveal reveal-d1 mb-16 grid grid-cols-1 overflow-hidden transition-all duration-200 hover:border-amber lg:grid-cols-[0.9fr_1.1fr]">
       <div className="relative flex min-h-[220px] flex-shrink-0 items-center justify-center overflow-hidden bg-surface lg:min-h-[320px]">
         {project.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
