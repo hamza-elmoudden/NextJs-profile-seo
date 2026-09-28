@@ -61,13 +61,13 @@ function BlogPostCard({ post }: { post: BlogPost }) {
           {post.readTime ? <span>· {post.readTime}</span> : null}
         </div>
         <h3 className="mb-2.5 font-display text-[17px] font-semibold leading-snug text-cream">
-          <Link href={`/blog/${post.slug}`} className="transition-colors hover:text-amber-gold">
+          <Link href={`/blog/${post.tag}/${post.slug}`} className="transition-colors hover:text-amber-gold">
             {post.title}
           </Link>
         </h3>
         <p className="mb-5 flex-1 text-sm leading-[1.65] text-muted">{post.excerpt}</p>
         <Link
-          href={`/blog/${post.slug}`}
+          href={`/blog/${post.tag}/${post.slug}`}
           className="inline-flex items-center gap-1.5 font-mono text-xs text-amber transition-[gap] duration-150 group-hover:gap-2.5"
         >
           read post →

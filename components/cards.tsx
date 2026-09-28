@@ -36,7 +36,7 @@ export function SkillCard({ name, tag, icon, secondary }: Skill) {
 }
 
 export function PostCard({ slug, tag, date, readTime, title, excerpt }: Post) {
-  const href = `/blog/${slug}`;
+  const href = `/blog/${tag}/${slug}`;
   return (
     <article className="card card-hover flex flex-col p-6">
       <div className="mb-4 flex items-center gap-3 font-mono text-[11px] text-muted">

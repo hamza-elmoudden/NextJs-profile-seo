@@ -28,6 +28,8 @@ const SERVICES_FETCH_OPTIONS = {
 const GET_SITEMAP_POSTS = `
   *[_type == "post" && defined(slug.current) && defined(publishedAt)] | order(publishedAt desc) {
     "slug": slug.current,
+    "category": coalesce(category->slug.current, null),
+    "imageUrl": coverImage.asset->url,
     publishedAt,
     updatedAt
   }
@@ -38,6 +40,7 @@ const GET_SITEMAP_POSTS = `
 const GET_SITEMAP_PROJECTS = `
   *[_type == "project" && defined(slug.current)] | order(_updatedAt desc) {
     "slug": slug.current,
+    "imageUrl": featuredImage.asset->url,
     "_createdAt": _createdAt,
     "_updatedAt": _updatedAt
   }
@@ -53,12 +56,15 @@ const GET_SITEMAP_SERVICES = `
 
 type SitemapPost = {
   slug: string;
+  category: string | null;
+  imageUrl: string | null;
   publishedAt: string | null;
   updatedAt: string | null;
 };
 
 type SitemapDated = {
   slug: string;
+  imageUrl: string | null;
   _createdAt: string;
   _updatedAt: string;
 };
@@ -94,10 +100,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   const postPages: MetadataRoute.Sitemap = posts.map((post) => ({
-    url: `${baseUrl}/blog/${post.slug}`,
+    url: `${baseUrl}/blog/${post.category ?? "post"}/${post.slug}`,
     lastModified: post.updatedAt ?? post.publishedAt ?? undefined,
     changeFrequency: "weekly",
     priority: 0.6,
+    ...(post.imageUrl ? { images: [post.imageUrl] } : {}),
   }));
 
   const projectPages: MetadataRoute.Sitemap = projects.map((project) => ({
@@ -105,6 +112,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: project._updatedAt ?? project._createdAt,
     changeFrequency: "monthly",
     priority: 0.7,
+    ...(project.imageUrl ? { images: [project.imageUrl] } : {}),
   }));
 
   const servicePages: MetadataRoute.Sitemap = services.map((service) => ({

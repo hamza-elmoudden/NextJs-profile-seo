@@ -10,7 +10,16 @@ const REVEAL_EVENT = "portfolio:hero-reveal";
 const INTRO_STORAGE_KEY = "home-hero-intro-completed";
 const MAX_INTRO_MS = 15000;
 
-const LINKS: { href: string; label: string; active?: (path: string) => boolean }[] = [
+type NavChild = { href: string; label: string; external: boolean };
+type NavLink = {
+  href: string;
+  label: string;
+  external?: boolean;
+  active?: (path: string) => boolean;
+  children?: NavChild[];
+};
+
+const LINKS: NavLink[] = [
   { href: "/", label: "Home", active: (path) => path === "/" },
   { href: "/about", label: "About", active: (path) => path.startsWith("/about") },
   { href: "/services", label: "Services", active: (path) => path.startsWith("/services") },
@@ -26,18 +35,28 @@ function isActivePath(url: string, pathname: string) {
   return pathname.startsWith(url);
 }
 
+function normalizeUrl(url: string) {
+  if (!url || url.startsWith("/") || url.startsWith("#") || url.startsWith("http")) return url;
+  return `/${url}`;
+}
+
 export default function Navbar({ navigation }: { navigation?: NavigationItem[] }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
   const isHome = pathname === "/";
 
-  const navItems = navigation?.length
+  const navItems: NavLink[] = navigation?.length
     ? navigation.map((item) => ({
-        href: item.url,
+        href: normalizeUrl(item.url),
         label: item.label,
         external: item.external ?? item.url.startsWith("http"),
         active: (path: string) => isActivePath(item.url, path),
+        children: (item.children ?? []).map((child) => ({
+          href: normalizeUrl(child.url),
+          label: child.label,
+          external: child.external ?? child.url.startsWith("http"),
+        })),
       }))
     : LINKS;
 
@@ -102,15 +121,48 @@ export default function Navbar({ navigation }: { navigation?: NavigationItem[] }
         <nav className="hidden items-center gap-[30px] lg:flex">
           {navItems.map((link) => {
             const isActive = link.active?.(pathname) ?? false;
+            const linkClass = `relative text-sm font-medium transition-colors duration-150 after:absolute after:bottom-[-6px] after:left-0 after:h-[2px] after:w-0 after:bg-amber after:transition-[width] after:duration-200 hover:text-cream hover:after:w-full ${
+              isActive ? "text-cream after:w-full" : "text-muted"
+            }`;
+            if (link.children?.length) {
+              return (
+                <div key={link.href} className="group relative">
+                  <Link
+                    href={link.href}
+                    target={link.external ? "_blank" : undefined}
+                    rel={link.external ? "noreferrer" : undefined}
+                    className={`${linkClass} inline-flex items-center gap-1`}
+                  >
+                    {link.label}
+                    <span className="text-[10px] transition-transform duration-150 group-hover:rotate-180">
+                      ▾
+                    </span>
+                  </Link>
+                  <div className="invisible absolute left-1/2 top-full z-50 min-w-[200px] -translate-x-1/2 pt-3 opacity-0 transition-all duration-150 group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100">
+                    <div className="overflow-hidden rounded-md border border-edge bg-card py-1.5 shadow-[0_16px_40px_rgba(0,0,0,0.5)]">
+                      {link.children.map((child) => (
+                        <Link
+                          key={child.href}
+                          href={child.href}
+                          target={child.external ? "_blank" : undefined}
+                          rel={child.external ? "noreferrer" : undefined}
+                          className="block px-4 py-2 text-sm text-muted transition-colors hover:bg-surface hover:text-cream"
+                        >
+                          {child.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            }
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                target={"external" in link && link.external ? "_blank" : undefined}
-                rel={"external" in link && link.external ? "noreferrer" : undefined}
-                className={`relative text-sm font-medium transition-colors duration-150 after:absolute after:bottom-[-6px] after:left-0 after:h-[2px] after:w-0 after:bg-amber after:transition-[width] after:duration-200 hover:text-cream hover:after:w-full ${
-                  isActive ? "text-cream after:w-full" : "text-muted"
-                }`}
+                target={link.external ? "_blank" : undefined}
+                rel={link.external ? "noreferrer" : undefined}
+                className={linkClass}
               >
                 {link.label}
               </Link>
@@ -143,16 +195,33 @@ export default function Navbar({ navigation }: { navigation?: NavigationItem[] }
         {navItems.map((link) => {
           const isActive = link.active?.(pathname) ?? false;
           return (
-            <Link
-              key={link.href}
-              href={link.href}
-              target={"external" in link && link.external ? "_blank" : undefined}
-              rel={"external" in link && link.external ? "noreferrer" : undefined}
-              onClick={() => setOpen(false)}
-              className={`text-sm font-medium ${isActive ? "text-cream" : "text-muted"}`}
-            >
-              {link.label}
-            </Link>
+            <div key={link.href} className="flex flex-col items-start gap-2">
+              <Link
+                href={link.href}
+                target={link.external ? "_blank" : undefined}
+                rel={link.external ? "noreferrer" : undefined}
+                onClick={() => setOpen(false)}
+                className={`text-sm font-medium ${isActive ? "text-cream" : "text-muted"}`}
+              >
+                {link.label}
+              </Link>
+              {link.children?.length ? (
+                <div className="ml-4 flex flex-col items-start gap-2 border-l border-edge pl-4">
+                  {link.children.map((child) => (
+                    <Link
+                      key={child.href}
+                      href={child.href}
+                      target={child.external ? "_blank" : undefined}
+                      rel={child.external ? "noreferrer" : undefined}
+                      onClick={() => setOpen(false)}
+                      className="text-sm text-muted transition-colors hover:text-cream"
+                    >
+                      {child.label}
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
+            </div>
           );
         })}
       </nav>

@@ -1,12 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import type { Service } from "@/lib/services";
 
+const emptySubscribe = () => () => {};
+
 export default function ServicesSlider({ services }: { services: Service[] }) {
   const trackRef = useRef<HTMLDivElement>(null);
-  const mountedRef = useRef(false);
+  const mounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
   const [index, setIndex] = useState(0);
   const [pages, setPages] = useState(1);
 
@@ -18,21 +24,19 @@ export default function ServicesSlider({ services }: { services: Service[] }) {
   }, []);
 
   const sync = useCallback(() => {
-    if (!mountedRef.current) return;
+    if (!mounted) return;
     const track = trackRef.current;
     if (!track) return;
     const perPage = getPerPage();
     const total = Math.max(1, Math.ceil(services.length / perPage));
     setPages(total);
     setIndex(Math.min(Math.round(track.scrollLeft / track.clientWidth), total - 1));
-  }, [getPerPage, services.length]);
+  }, [getPerPage, services.length, mounted]);
 
   useEffect(() => {
-    mountedRef.current = true;
     sync();
     window.addEventListener("resize", sync);
     return () => {
-      mountedRef.current = false;
       window.removeEventListener("resize", sync);
     };
   }, [sync]);
@@ -98,7 +102,7 @@ export default function ServicesSlider({ services }: { services: Service[] }) {
             type="button"
             aria-label="Previous services"
             onClick={() => goTo(index - 1)}
-            disabled={index === 0}
+            disabled={mounted && index === 0}
             className={arrow}
           >
             ←
@@ -107,7 +111,7 @@ export default function ServicesSlider({ services }: { services: Service[] }) {
             type="button"
             aria-label="Next services"
             onClick={() => goTo(index + 1)}
-            disabled={index >= pages - 1}
+            disabled={mounted && index >= pages - 1}
             className={arrow}
           >
             →

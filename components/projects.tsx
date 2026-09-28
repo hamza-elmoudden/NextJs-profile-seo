@@ -26,7 +26,7 @@ function ProjectCover({ project }: { project: Project }) {
         <img
           src={`${project.imageUrl}?w=800&auto=format`}
           alt={project.imageAlt ?? project.name}
-          className="absolute inset-0 h-full w-full object-cover"
+          className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
           loading="lazy"
         />
       ) : (
@@ -74,7 +74,7 @@ function TypeBadge({ type }: { type: string }) {
 function ProjectCard({ project }: { project: Project }) {
   return (
     <article
-      className={`card group relative flex flex-col overflow-hidden transition-colors duration-150 hover:border-amber ${
+      className={`card group relative flex flex-col overflow-hidden transition-all duration-300 hover:border-amber hover:shadow-[0_12px_32px_rgba(0,0,0,0.5),0_0_24px_rgba(255,107,0,0.12)] hover:-translate-y-1 ${
         project.pinned ? "border-[rgba(255,107,0,0.3)]" : ""
       }`}
     >
