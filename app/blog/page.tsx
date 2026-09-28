@@ -67,7 +67,7 @@ function FeaturedPost({ post }: { post?: Post | null }) {
         </div>
         <h2 className="mb-[14px] font-display text-[clamp(22px,2.4vw,30px)] font-bold leading-[1.25] text-cream">
           <Link
-            href={post?.slug ? `/blog/${post.slug}` : "#"}
+            href={post?.slug ? `/blog/${post.category?.slug ?? "post"}/${post.slug}` : "#"}
             className="transition-colors hover:text-amber-gold"
           >
             {post?.title ?? "CQRS in NestJS: Beyond the Tutorial"}
@@ -78,7 +78,7 @@ function FeaturedPost({ post }: { post?: Post | null }) {
             "The tutorial stops at commands and queries. Production adds sagas, idempotency keys, event replay, and three kinds of regret. Here's everything the docs leave out — from inbox patterns to eventual consistency pitfalls I hit live."}
         </p>
         <Link
-          href={post?.slug ? `/blog/${post.slug}` : "#"}
+          href={post?.slug ? `/blog/${post.category?.slug ?? "post"}/${post.slug}` : "#"}
           className="inline-flex items-center gap-1.5 self-start font-mono text-[13px] text-amber transition-[gap] duration-150 hover:gap-2.5"
         >
           read post →
