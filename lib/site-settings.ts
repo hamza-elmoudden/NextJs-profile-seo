@@ -1,7 +1,13 @@
 import { sanityClient } from "@/lib/sanity";
 
 export interface SanityImage {
-  asset: { url: string };
+  asset: {
+    url: string;
+    metadata?: {
+      dimensions?: { width: number; height: number; aspectRatio: number };
+      lqip?: string;
+    };
+  };
   alt: string | null;
   caption?: string | null;
 }
