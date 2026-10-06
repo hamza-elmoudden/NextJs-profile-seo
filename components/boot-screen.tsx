@@ -1,34 +1,15 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
-import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import AppLoader from "@/components/app-loader";
 
 const MIN_DISPLAY_MS = 3800;
 const FADE_MS = 600;
-const INTRO_STORAGE_KEY = "home-hero-intro-completed";
 
-const noopSubscribe = () => () => {};
-
-const readIntroCompleted = () => {
-  try {
-    return window.sessionStorage.getItem(INTRO_STORAGE_KEY) === "true";
-  } catch {
-    return false;
-  }
-};
+export const BOOT_DONE_EVENT = "portfolio:boot-done";
+export const BOOT_DONE_FLAG = "__portfolioBootDone";
 
 export default function BootScreen() {
-  const pathname = usePathname();
-
-  // First visit to Home: skip the splash so the hero video intro is the
-  // first thing the user sees. Server snapshot keeps SSR output stable.
-  const skipHomeIntro = useSyncExternalStore(
-    noopSubscribe,
-    () => pathname === "/" && !readIntroCompleted(),
-    () => false,
-  );
-
   const [loaded, setLoaded] = useState(
     () => typeof window !== "undefined" && document.readyState === "complete",
   );
@@ -59,11 +40,14 @@ export default function BootScreen() {
   }, [fading]);
 
   useEffect(() => {
-    if (!gone && !skipHomeIntro) return;
+    if (!gone) return;
     document.body.style.overflow = "";
-  }, [gone, skipHomeIntro]);
+    // Signal that the loader has fully faded out: the hero intro video may start.
+    (window as unknown as Record<string, unknown>)[BOOT_DONE_FLAG] = true;
+    window.dispatchEvent(new CustomEvent(BOOT_DONE_EVENT));
+  }, [gone]);
 
-  if (gone || skipHomeIntro) return null;
+  if (gone) return null;
 
   return (
     <div
