@@ -364,7 +364,7 @@ export default async function About() {
                   { key: "location", value: "Morocco 🇲🇦", terminal: false },
                   { key: "role", value: "Backend & AI Engineer", terminal: false },
                   { key: "focus", value: "NestJS · FastAPI · Go", terminal: false },
-                  { key: "exp", value: "5+ years", terminal: false },
+                  { key: "exp", value: "3+ years", terminal: false },
                   {
                     key: "status",
                     value: "● open to work",

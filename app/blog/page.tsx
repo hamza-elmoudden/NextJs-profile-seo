@@ -2,10 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import BlogPosts from "@/components/blog-posts";
 import ContactStrip from "@/components/contact-strip";
+import Projects from "@/components/projects";
+import SectionHeader from "@/components/section-header";
 import ShinyText from "@/components/shiny-text";
 import { getCategories, getPostsPage } from "@/lib/blog-page";
-import { BLOG_POSTS } from "@/lib/content";
+import { BLOG_POSTS, PROJECTS, type Project } from "@/lib/content";
 import { getPostBySlug, getPosts, postToCard, type Post } from "@/lib/posts";
+import { getProjects, projectToCard } from "@/lib/projects";
 
 export const dynamic = "force-dynamic";
 
@@ -141,6 +144,16 @@ export default async function Blog({
 }) {
   const { category } = await searchParams;
 
+  let previewProjects: Project[] = PROJECTS.slice(0, 3);
+  try {
+    const sanityProjects = await getProjects();
+    if (sanityProjects.length > 0) {
+      previewProjects = sanityProjects.slice(0, 3).map((p) => projectToCard(p));
+    }
+  } catch {
+    // Sanity unreachable — fall back to static mocks.
+  }
+
   const [postsPage, categories, sanityPosts] = await Promise.all([
     getPostsPage(),
     getCategories(),
@@ -167,12 +180,7 @@ export default async function Blog({
     null;
   const featuredPost = featuredSlug ? await getPostBySlug(featuredSlug) : null;
 
-  const categoryIds = new Set(
-    categories.length > 0
-      ? categories.map((c) => c.slug).filter((s): s is string => Boolean(s))
-      : BLOG_POSTS.flatMap((p) => p.tags),
-  );
-  const activeCategory = category && categoryIds.has(category) ? category : "all";
+  const activeCategory = category ?? "all";
   const filteredPosts =
     activeCategory === "all"
       ? cardPosts
@@ -257,6 +265,21 @@ export default async function Blog({
         showFilter={showCategoryFilter}
         activeCategory={activeCategory}
       />
+
+      {/* ── FEATURED PROJECTS ─────────────────────── */}
+      <section className="border-t border-edge bg-base pt-[72px]">
+        <div className="container-x mb-4 flex flex-wrap items-end justify-between gap-4">
+          <SectionHeader
+            label="ls ~/projects"
+            title="Featured Projects"
+            sub="The systems and products behind the writing — SaaS platforms, libraries, and client work."
+          />
+          <Link href="/projects" className="btn btn-ghost mt-2 shrink-0">
+            View All Projects →
+          </Link>
+        </div>
+        <Projects projects={previewProjects} showFilter={false} />
+      </section>
 
       {/* ── NEWSLETTER ────────────────────────────── */}
       <section className="border-y border-edge bg-base py-[72px]">
