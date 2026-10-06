@@ -21,6 +21,7 @@ export type Post = {
   readTime: string;
   title: string;
   excerpt: string;
+  cover?: string;
 };
 
 const skillIcon = (glyph: string) => (
