@@ -131,7 +131,13 @@ function ProjectCard({ project }: { project: Project }) {
 
 const PROJECTS_PER_PAGE = 6;
 
-export default function Projects({ projects }: { projects: Project[] }) {
+export default function Projects({
+  projects,
+  showFilter = true,
+}: {
+  projects: Project[];
+  showFilter?: boolean;
+}) {
   const [active, setActive] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const visible =
@@ -145,7 +151,8 @@ export default function Projects({ projects }: { projects: Project[] }) {
 
   return (
     <>
-      <div className="sticky top-[68px] z-50 border-b border-edge bg-base py-5">
+      {showFilter ? (
+        <div className="sticky top-[68px] z-50 border-b border-edge bg-base py-5">
         <div className="container-x flex flex-wrap items-center gap-3">
           {PROJECT_FILTERS.map((filter) => (
             <button
@@ -170,8 +177,9 @@ export default function Projects({ projects }: { projects: Project[] }) {
           </span>
         </div>
       </div>
+      ) : null}
 
-      <section className="pb-[52px] pt-16">
+      <section className={showFilter ? "pb-[52px] pt-16" : "pb-[52px]"}>
         <div className="container-x">
           <div className="mb-12 grid grid-cols-1 gap-5 min-[560px]:grid-cols-2 xl:grid-cols-3">
             {visiblePage.map((project) => (

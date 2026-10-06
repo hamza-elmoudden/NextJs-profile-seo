@@ -145,6 +145,11 @@ export default function BlogPosts({
 
       <section className="pb-[52px] pt-16">
         <div className="container-x">
+          {visiblePosts.length === 0 ? (
+            <p className="mb-12 font-mono text-sm text-muted">
+              <span className="text-terminal">$</span> no posts found in this category yet — check back soon.
+            </p>
+          ) : null}
           <div className="mb-12 grid grid-cols-1 gap-5 min-[560px]:grid-cols-2 xl:grid-cols-3">
             {visiblePosts.map((post) => (
               <BlogPostCard key={post.slug} post={post} />
