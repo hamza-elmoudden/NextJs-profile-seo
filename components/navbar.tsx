@@ -106,7 +106,7 @@ export default function Navbar({ navigation }: { navigation?: NavigationItem[] }
   return (
     <header
       ref={headerRef}
-      className="sticky top-0 z-[100] border-b border-edge bg-[rgba(13,16,18,0.88)] backdrop-blur-xl"
+      className="relative z-[100] border-b border-edge bg-[rgba(13,16,18,0.88)] backdrop-blur-xl"
     >
       <div className="container-x flex h-[68px] items-center justify-between gap-6">
         <Link href="/" className="flex items-center gap-2.5 font-display text-[20px] font-bold">
