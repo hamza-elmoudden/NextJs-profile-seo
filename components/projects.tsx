@@ -95,9 +95,9 @@ function ProjectCard({ project }: { project: Project }) {
         </h3>
         <p className="mb-[18px] flex-1 text-sm leading-[1.65] text-muted">{project.description}</p>
         <div className="mb-[18px] flex flex-wrap gap-1.5">
-          {project.stack.map((tag) => (
+          {project.stack.map((tag,ind) => (
             <span
-              key={tag}
+              key={ind}
               className="rounded-[4px] border border-edge bg-surface px-2.5 py-[3px] font-mono text-[10px] text-muted"
             >
               {tag}

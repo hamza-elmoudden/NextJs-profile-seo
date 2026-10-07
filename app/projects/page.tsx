@@ -79,9 +79,9 @@ function FeaturedProject({ project }: { project: Project }) {
         </h2>
         <p className="mb-6 flex-1 text-[15px] leading-[1.7] text-muted">{project.description}</p>
         <div className="mb-7 flex flex-wrap gap-2">
-          {project.stack.map((tag) => (
+          {project.stack.map((tag,ind) => (
             <span
-              key={tag}
+              key={ind}
               className="rounded-[4px] border border-edge bg-surface px-2.5 py-[3px] font-mono text-[11px] text-muted"
             >
               {tag}
