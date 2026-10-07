@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import ContactStrip from "@/components/contact-strip";
+import BlogPosts from "@/components/blog-posts";
+import SectionHeader from "@/components/section-header";
 import ShinyText from "@/components/shiny-text";
 import Projects from "@/components/projects";
-import { PROJECTS, type Project } from "@/lib/content";
+import { BLOG_POSTS, PROJECTS, type BlogPost, type Project } from "@/lib/content";
 import { getFeaturedProjects, getProjects, projectToCard } from "@/lib/projects";
+import { getPosts, postToCard } from "@/lib/posts";
 
 export const dynamic = "force-dynamic";
 
@@ -110,11 +113,13 @@ function FeaturedProject({ project }: { project: Project }) {
 export default async function ProjectsPage() {
   let projects: Project[] = PROJECTS;
   let featuredProject: Project = PROJECTS.find((p) => p.featured) ?? PROJECTS[0];
+  let latestPosts: BlogPost[] = BLOG_POSTS.slice(0, 3);
 
   try {
-    const [sanityProjects, sanityFeatured] = await Promise.all([
+    const [sanityProjects, sanityFeatured, sanityPosts] = await Promise.all([
       getProjects(),
       getFeaturedProjects(),
+      getPosts(),
     ]);
     if (sanityProjects.length > 0) {
       const pinnedSlugs = sanityFeatured.map((p) => p.slug);
@@ -123,6 +128,9 @@ export default async function ProjectsPage() {
     const firstFeatured = sanityFeatured[0];
     if (firstFeatured) {
       featuredProject = projectToCard(firstFeatured);
+    }
+    if (sanityPosts.length > 0) {
+      latestPosts = sanityPosts.slice(0, 3).map((p) => postToCard(p));
     }
   } catch {
     // Sanity unreachable — fall back to static mocks.
@@ -166,6 +174,21 @@ export default async function ProjectsPage() {
 
       {/* ── FILTERS + PROJECTS GRID ───────────────── */}
       <Projects projects={projects} />
+
+      {/* ── LATEST FROM THE BLOG ──────────────────── */}
+      <section className="border-t border-edge bg-base pt-[72px]">
+        <div className="container-x mb-4 flex flex-wrap items-end justify-between gap-4">
+          <SectionHeader
+            label="tail -f writing.log"
+            title="Latest from the Blog"
+            sub="Notes on backend engineering, architecture, and the systems behind these projects."
+          />
+          <Link href="/blog" className="btn btn-ghost mt-2 shrink-0">
+            View All Posts →
+          </Link>
+        </div>
+        <BlogPosts posts={latestPosts} showFilter={false} />
+      </section>
 
       {/* ── CONTACT STRIP ─────────────────────────── */}
       <ContactStrip
