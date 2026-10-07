@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import ContactStrip from "@/components/contact-strip";
+import Reveal from "@/components/reveal";
 import ShinyText from "@/components/shiny-text";
+import SpotlightCard from "@/components/spotlight-card";
 import { getServices } from "@/lib/services";
 
 // ISR: revalidate this page every 25 minutes
@@ -48,30 +50,33 @@ export default async function Services() {
           <p className="section-label hero-reveal">cat services.list</p>
           {services.length > 0 ? (
             <div className="mt-8 grid grid-cols-1 gap-5 min-[560px]:grid-cols-2 xl:grid-cols-3">
-              {services.map((service) => (
-                <Link
-                  key={service._id}
-                  href={`/services/${service.slug}`}
-                  className="card group flex flex-col p-[26px] transition-colors duration-150 hover:border-amber"
-                >
-                  <div className="mb-5 flex items-center justify-between">
-                    <span className="flex h-11 w-fit px-2 items-center justify-center rounded-md border border-edge bg-card font-mono text-[13px] text-terminal transition-colors group-hover:border-amber group-hover:text-amber">
-                      {(service.icon ?? service.title.slice(0, 2)).toUpperCase()}
-                    </span>
-                    {service.featured ? (
-                      <span className="font-mono text-[11px] text-amber">★ featured</span>
-                    ) : null}
-                  </div>
-                  <h2 className="mb-2.5 font-display text-[18px] font-semibold leading-snug text-cream transition-colors group-hover:text-amber-gold">
-                    {service.title}
-                  </h2>
-                  <p className="flex-1 text-sm leading-[1.6] text-muted">
-                    {service.shortDescription}
-                  </p>
-                  <span className="mt-5 inline-flex items-center gap-1.5 font-mono text-xs text-amber transition-[gap] duration-150 group-hover:gap-2.5">
-                    view service →
-                  </span>
-                </Link>
+              {services.map((service, i) => (
+                <Reveal key={service._id} delay={Math.min(i * 0.06, 0.36)} className="h-full">
+                  <Link href={`/services/${service.slug}`} className="group block h-full">
+                    <SpotlightCard
+                      as="article"
+                      className="card card-hover relative flex h-full flex-col p-[26px] transition-all duration-200 ease-out group-hover:z-10 group-hover:-translate-y-1.5 group-hover:border-amber group-hover:shadow-[0_16px_40px_-12px_rgba(255,107,0,0.25)]"
+                    >
+                      <div className="mb-5 flex items-center justify-between">
+                        <span className="flex h-11 w-fit px-2 items-center justify-center rounded-md border border-edge bg-card font-mono text-[13px] text-terminal transition-colors group-hover:border-amber group-hover:text-amber">
+                          {(service.icon ?? service.title.slice(0, 2)).toUpperCase()}
+                        </span>
+                        {service.featured ? (
+                          <span className="font-mono text-[11px] text-amber">★ featured</span>
+                        ) : null}
+                      </div>
+                      <h2 className="mb-2.5 font-display text-[18px] font-semibold leading-snug text-cream transition-colors group-hover:text-amber-gold">
+                        {service.title}
+                      </h2>
+                      <p className="flex-1 text-sm leading-[1.6] text-muted">
+                        {service.shortDescription}
+                      </p>
+                      <span className="mt-5 inline-flex items-center gap-1.5 font-mono text-xs text-amber transition-[gap] duration-150 group-hover:gap-2.5">
+                        view service →
+                      </span>
+                    </SpotlightCard>
+                  </Link>
+                </Reveal>
               ))}
             </div>
           ) : (
