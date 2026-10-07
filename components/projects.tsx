@@ -152,7 +152,7 @@ export default function Projects({
   return (
     <>
       {showFilter ? (
-        <div className="sticky top-[68px] z-50 border-b border-edge bg-base py-5">
+        <div className="border-b border-edge bg-base py-5">
         <div className="container-x flex flex-wrap items-center gap-3">
           {PROJECT_FILTERS.map((filter) => (
             <button
