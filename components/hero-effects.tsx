@@ -63,13 +63,15 @@ export default function HeroEffects() {
     // Freeze the video's exact final frame onto the canvas and hide the
     // video element, so navigation never replays or shows a wrong frame.
     if (readIntroCompleted()) {
+      // Hide the video synchronously (before paint) so it can never flash
+      // its first frame while we seek to the end and capture the last one.
+      video.style.visibility = "hidden";
+      swapToLoopVideo();
       const freezeLastFrame = () => {
         if (!ctx || video.videoWidth === 0) return;
         canvas!.width = video.videoWidth;
         canvas!.height = video.videoHeight;
         ctx.drawImage(video, 0, 0, canvas!.width, canvas!.height);
-        video.style.visibility = "hidden";
-        swapToLoopVideo();
       };
       const seekToEnd = () => {
         if (Number.isFinite(video.duration) && video.duration > 0) {
@@ -235,14 +237,40 @@ export default function HeroEffects() {
     };
     video.addEventListener("loadeddata", captureWhilePlaying);
 
-    video.muted = true;
-    const play = video.play();
-    if (play && typeof play.catch === "function") {
-      play.catch(() => {
-        captureFrame();
-        showImmediately();
-      });
-    }
+    // Keep the intro video invisible until it is fully loaded and the boot
+    // loader has finished; only then start playing it.
+    video.style.opacity = "0";
+    let bootDone =
+      (window as unknown as Record<string, unknown>).__portfolioBootDone ===
+      true;
+    let canPlayThrough = video.readyState >= 4;
+    let started = false;
+
+    const tryStart = () => {
+      if (started || revealed || !bootDone || !canPlayThrough) return;
+      started = true;
+      video.style.opacity = "";
+      video.muted = true;
+      const play = video.play();
+      if (play && typeof play.catch === "function") {
+        play.catch(() => {
+          captureFrame();
+          showImmediately();
+        });
+      }
+    };
+
+    const handleBootDone = () => {
+      bootDone = true;
+      tryStart();
+    };
+    const handleCanPlayThrough = () => {
+      canPlayThrough = true;
+      tryStart();
+    };
+    window.addEventListener("portfolio:boot-done", handleBootDone);
+    video.addEventListener("canplaythrough", handleCanPlayThrough);
+    tryStart();
 
     if (reduceMotion) {
       video.pause();
@@ -258,6 +286,8 @@ export default function HeroEffects() {
 
     return () => {
       window.clearTimeout(fallbackTimer);
+      window.removeEventListener("portfolio:boot-done", handleBootDone);
+      video.removeEventListener("canplaythrough", handleCanPlayThrough);
       video.removeEventListener("ended", handleVideoEnd);
       video.removeEventListener("loadeddata", captureWhilePlaying);
       if (timeline) timeline.kill();
