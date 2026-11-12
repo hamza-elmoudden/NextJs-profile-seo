@@ -253,7 +253,7 @@ export default async function Home() {
       {/* ── PROJECTS PREVIEW ─────────────────────── */}
       <section id="projects" className="section-pad">
         <div className="container-x">
-          <div className="flex items-start justify-between gap-6">
+          <div className="md:flex items-start justify-between gap-6">
             <div>
               <SectionHeader
                 label="cat pinned.project"

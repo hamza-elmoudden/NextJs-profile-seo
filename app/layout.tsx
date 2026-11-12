@@ -49,7 +49,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       className={`${spaceGrotesk.variable} ${inter.variable} ${jetBrainsMono.variable} h-full antialiased`}
+      
     >
+      <header>
+        <meta name="google-site-verification" content="HfBXNpLNqLlROstqOfH-JOeN_Rk_VXq_dFDAhdKhSgw" />
+      </header>
       <body className="flex min-h-full flex-col">
         <StoreProvider settings={settings}>
           <BootScreen />
