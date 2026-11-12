@@ -8,6 +8,7 @@ import ScrollToTop from "@/components/scroll-to-top";
 import { getSiteSettings } from "@/lib/site-settings";
 import StoreProvider from "@/components/store-provider";
 import "./globals.css";
+import Script from "next/script";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
@@ -55,6 +56,22 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       className={`${spaceGrotesk.variable} ${inter.variable} ${jetBrainsMono.variable} h-full antialiased`}
       
     >
+      <head>
+        <Script
+          id="google-tag-manager"
+          strategy="afterInteractive"
+          src="https://www.googletagmanager.com/gtm.js?id=GTM-587RRV5P"
+        />
+
+        <Script id="google-tag-manager-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){window.dataLayer.push(arguments);}
+            gtag('js', new Date());
+          `}
+        </Script>
+      </head>
+      
       <body className="flex min-h-full flex-col">
         <StoreProvider settings={settings}>
           <BootScreen />
