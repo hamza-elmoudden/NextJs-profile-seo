@@ -39,6 +39,10 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: settings?.defaultOgImage?.asset.url
       ? { images: [{ url: settings.defaultOgImage.asset.url }] }
       : undefined,
+      
+    verification: {
+      google: "HfBXNpLNqLlROstqOfH-JOeN_Rk_VXq_dFDAhdKhSgw",
+    },
   };
 }
 
@@ -51,9 +55,6 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       className={`${spaceGrotesk.variable} ${inter.variable} ${jetBrainsMono.variable} h-full antialiased`}
       
     >
-      <head>
-        <meta name="google-site-verification" content="HfBXNpLNqLlROstqOfH-JOeN_Rk_VXq_dFDAhdKhSgw" />
-      </head>
       <body className="flex min-h-full flex-col">
         <StoreProvider settings={settings}>
           <BootScreen />
