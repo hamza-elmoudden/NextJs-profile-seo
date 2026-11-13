@@ -10,6 +10,29 @@ import { getHomePage } from "@/lib/home-page";
 import { getFeaturedPosts } from "@/lib/posts";
 import { getFeaturedProjects, projectToCard } from "@/lib/projects";
 import { getServices } from "@/lib/services";
+import { Metadata } from "next";
+import { getSiteSettings } from "@/lib/site-settings";
+
+
+
+export async function generateMetadata():Promise<Metadata> {
+    const settings = await getSiteSettings();
+    
+      return {
+        title: {
+          default: settings?.siteTitle ?? settings?.siteName ?? "Hamza Elmouddane — Backend & AI Engineer",
+          template: `%s — ${settings?.siteName ?? "Hamza Elmouddane"}`,
+        },
+    
+        description:
+          settings?.siteDescription ??
+          "Backend & AI Engineer based in Morocco. NestJS · FastAPI · Go · TypeScript. I build systems. I ship backends. I engineer the invisible.",
+        openGraph: settings?.defaultOgImage?.asset.url
+          ? { images: [{ url: settings.defaultOgImage.asset.url }] }
+          : undefined,
+      }
+  }
+
 
 export default async function Home() {
   let sanityServices: Awaited<ReturnType<typeof getServices>> = [];
@@ -87,6 +110,7 @@ export default async function Home() {
       ? featuredProjects.map((p) => projectToCard(p))
       : PROJECTS;
   const featuredProject = projects.find((p) => p.featured) ?? projects[0] ?? null;
+
 
   return (
     <>
