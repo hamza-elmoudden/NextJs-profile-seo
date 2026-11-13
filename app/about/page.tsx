@@ -11,7 +11,6 @@ export const revalidate = 1800;
 export async function generateMetadata(): Promise<Metadata> {
   const about = await getAboutPage();
   const seo = about?.seo;
-  console.log(seo)
   return {
     title: seo?.metaTitle ?? "About — Hamza Elmouddane",
     description:
