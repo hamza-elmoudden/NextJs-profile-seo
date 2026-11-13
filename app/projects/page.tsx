@@ -12,7 +12,7 @@ import { getPosts, postToCard } from "@/lib/posts";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Projects — Hamza Elmouddane",
+  title: "Projects",
   description:
     "Browse the projects built by Hamza Elmouddane — scalable web applications, backend systems, and digital products using NestJS, FastAPI, React, and more.",
 };

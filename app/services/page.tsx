@@ -11,7 +11,7 @@ export const revalidate = 1500;
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Services — Hamza Elmouddane",
+    title: "Services",
     description:
       "Backend development, AI engineering, and infrastructure services — APIs, pipelines, and systems that have to work, by Hamza Elmouddane.",
   };
