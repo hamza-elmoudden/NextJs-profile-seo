@@ -215,9 +215,10 @@ export default async function ProjectPage({
                 <div className="mt-5 border-t border-edge pt-4">
                   <p className="mb-3 font-mono text-[11px] text-muted">stack</p>
                   <div className="flex flex-wrap gap-2">
-                    {(project.technologies ?? []).map((t) => (
+                    {(project.technologies ?? []).map((t,id) => (
                       <span
-                        key={t.slug ?? t.name}
+          
+                        key={id ?? t.name}
                         className="rounded-[4px] border border-edge px-2 py-0.5 font-mono text-[11px] text-terminal"
                       >
                         {t.name}
