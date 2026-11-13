@@ -4,7 +4,7 @@ import ContactEmailLink from "@/components/contact-email-link";
 import ShinyText from "@/components/shiny-text";
 
 export const metadata: Metadata = {
-  title: "Contact — Hamza Elmouddane",
+  title: "Contact",
   description:
     "Contact Hamza Elmouddane about backend systems, scalable web applications, AI pipelines, and digital product development.",
 };
