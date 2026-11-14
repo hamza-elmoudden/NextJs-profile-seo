@@ -33,7 +33,7 @@ export async function generateMetadata({
     //   ? { canonical: service.seo.canonicalUrl }
     //   : undefined,
     alternates:{
-      canonical:title
+      canonical:service.seo?.canonicalUrl
     },
     robots: service.seo?.noIndex ? { index: false, follow: false } : undefined,
     openGraph: {
