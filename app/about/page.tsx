@@ -11,12 +11,15 @@ export const revalidate = 1800;
 export async function generateMetadata(): Promise<Metadata> {
   const about = await getAboutPage();
   const seo = about?.seo;
+  console.log(seo)
   return {
     title: seo?.metaTitle ?? "About — Hamza Elmouddane",
     description:
       seo?.metaDescription ??
       "Backend & AI Engineer based in Morocco. Self-taught, production-obsessed, building systems that last.",
-    alternates: seo?.canonicalUrl ? { canonical: seo.canonicalUrl } : undefined,
+    alternates:{
+      canonical:seo?.canonicalUrl ?? 'about'
+    },
     robots: seo?.noIndex ? { index: false, follow: false } : undefined,
     openGraph: {
       title: seo?.ogTitle ?? seo?.metaTitle ?? "About — Hamza Elmouddane",
