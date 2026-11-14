@@ -15,6 +15,9 @@ export const metadata: Metadata = {
   title: "Projects",
   description:
     "Browse the projects built by Hamza Elmouddane — scalable web applications, backend systems, and digital products using NestJS, FastAPI, React, and more.",
+  alternates:{
+    canonical:'/projects'
+  }
 };
 
 const TYPE_BADGE: Record<string, string> = {

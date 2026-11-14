@@ -57,11 +57,11 @@ export async function generateMetadata({
     project.seo?.ogImage?.asset?.url ?? project.featuredImage?.asset?.url;
 
   return {
-    title: `${title} — Hamza Elmouddane`,
+    title: `${title}`,
     description,
-    alternates: project.seo?.canonicalUrl
-      ? { canonical: project.seo.canonicalUrl }
-      : undefined,
+    alternates: {
+      canonical:title
+    },
     robots: project.seo?.noIndex ? { index: false, follow: false } : undefined,
     openGraph: {
       title: project.seo?.ogTitle ?? title,
