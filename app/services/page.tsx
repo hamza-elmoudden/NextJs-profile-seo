@@ -14,6 +14,9 @@ export async function generateMetadata(): Promise<Metadata> {
     title: "Services",
     description:
       "Backend development, AI engineering, and infrastructure services — APIs, pipelines, and systems that have to work, by Hamza Elmouddane.",
+    alternates:{
+      canonical:'/services'
+    }
   };
 }
 

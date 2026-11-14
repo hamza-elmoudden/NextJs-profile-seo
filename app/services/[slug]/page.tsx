@@ -29,9 +29,12 @@ export async function generateMetadata({
   return {
     title: `${title} — Hamza Elmouddane`,
     description,
-    alternates: service.seo?.canonicalUrl
-      ? { canonical: service.seo.canonicalUrl }
-      : undefined,
+    // alternates: service.seo?.canonicalUrl
+    //   ? { canonical: service.seo.canonicalUrl }
+    //   : undefined,
+    alternates:{
+      canonical:title
+    },
     robots: service.seo?.noIndex ? { index: false, follow: false } : undefined,
     openGraph: {
       title: service.seo?.ogTitle ?? title,
