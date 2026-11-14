@@ -27,7 +27,7 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-  const settings = await getSiteSettings();
+  // const settings = await getSiteSettings();
 
   return {
     // title: {
@@ -45,6 +45,7 @@ export async function generateMetadata(): Promise<Metadata> {
     verification: {
       google: "HfBXNpLNqLlROstqOfH-JOeN_Rk_VXq_dFDAhdKhSgw",
     },
+
   };
 }
 
