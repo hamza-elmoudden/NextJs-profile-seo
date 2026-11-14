@@ -23,7 +23,9 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title,
     description,
-    alternates: postsPage?.canonicalUrl ? { canonical: postsPage.canonicalUrl } : undefined,
+    alternates: {
+      canonical: postsPage?.canonicalUrl ?? 'blog'
+    },
     robots: postsPage?.noIndex ? { index: false, follow: false } : undefined,
     openGraph: {
       title: postsPage?.ogTitle ?? title,
