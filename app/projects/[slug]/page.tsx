@@ -53,14 +53,13 @@ export async function generateMetadata({
 
   const title = project.seo?.metaTitle ?? project.title;
   const description = project.seo?.metaDescription ?? project.shortDescription;
-  const ogImageUrl =
-    project.seo?.ogImage?.asset?.url ?? project.featuredImage?.asset?.url;
+  const ogImageUrl = project.seo?.ogImage?.asset?.url ?? project.featuredImage?.asset?.url;
 
   return {
     title: `${title}`,
     description,
     alternates: {
-      canonical:title
+      canonical:project.seo?.canonicalUrl
     },
     robots: project.seo?.noIndex ? { index: false, follow: false } : undefined,
     openGraph: {
