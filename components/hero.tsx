@@ -26,7 +26,7 @@ export default async function Hero() {
   return (
     <section
       id="home"
-      className="relative flex min-h-[100svh]  flex-col justify-center overflow-hidden py-4 min-[860px]:py-6"
+      className="relative flex min-h-svh  flex-col justify-center overflow-hidden py-4 min-[860px]:py-6"
     >
       <HeroEffects />
       <canvas
@@ -36,7 +36,7 @@ export default async function Hero() {
       />
       <video
         data-hero-video
-        className="pointer-events-none absolute inset-0 z-[1] h-full w-full object-cover"
+        className="pointer-events-none absolute inset-0 z-1 h-full w-full object-cover"
         src={VIDEO_SRC}
         muted
         playsInline
@@ -46,7 +46,7 @@ export default async function Hero() {
       />
       <video
         data-hero-video-loop
-        className="pointer-events-none absolute inset-0 z-[1] h-full w-full object-cover opacity-0 transition-opacity duration-700"
+        className="pointer-events-none absolute inset-0 z-1 h-full w-full object-cover opacity-0 transition-opacity duration-700"
         src={LOOP_VIDEO_SRC}
         muted
         loop
@@ -57,15 +57,15 @@ export default async function Hero() {
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute inset-0 z-[2] bg-ink/55"
+        className="pointer-events-none absolute inset-0 z-2 bg-ink/55"
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute inset-0 z-[3] bg-gradient-to-b from-ink/70 via-transparent to-ink/80"
+        className="pointer-events-none absolute inset-0 z-3 bg-linear-to-b from-ink/70 via-transparent to-ink/80"
         aria-hidden
       />
       <div
-        className="bg-grid-faint pointer-events-none absolute inset-0 z-[3]"
+        className="bg-grid-faint pointer-events-none absolute inset-0 z-3"
         aria-hidden
       />
 
@@ -73,9 +73,9 @@ export default async function Hero() {
         <div>
           <div
             data-hero-badge
-            className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-edge bg-card px-3.5 py-[7px] font-mono text-xs text-screen max-lg:static lg:absolute lg:-top-5 lg:right-0"
+            className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-edge bg-card px-3.5 py-1.75 font-mono text-xs text-screen max-lg:static lg:absolute lg:-top-5 lg:right-0"
           >
-            <span className="h-[7px] w-[7px] rounded-full bg-terminal shadow-[0_0_8px_var(--color-terminal)]" />
+            <span className="h-1.75 w-1.75 rounded-full bg-terminal shadow-[0_0_8px_var(--color-terminal)]" />
             available for freelance
           </div>
           <p
@@ -106,7 +106,7 @@ export default async function Hero() {
           </h1>
           <p
             data-hero-desc
-            className="mb-[34px] max-w-[520px] text-[17px] text-muted"
+            className="mb-8.5 max-w-130 text-[17px] text-muted"
           >
             <strong className="font-semibold text-cream">
               Backend &amp; AI Engineer
@@ -133,12 +133,12 @@ export default async function Hero() {
               <FaGithub className="text-lg" /> GitHub →
             </a>
           </div>
-          {/* <div
+          <div
             data-hero-stats
             className="flex max-w-[520px] flex-col overflow-hidden rounded-md border border-edge bg-card min-[560px]:flex-row"
           >
             {[
-              { num: "5", sup: "+", label: "years exp" },
+              { num: "4", sup: "+", label: "years exp" },
               { num: "20", sup: "+", label: "projects shipped" },
               { num: "3", sup: "", label: "open source libs" },
             ].map((stat) => (
@@ -157,7 +157,7 @@ export default async function Hero() {
                 </div>
               </div>
             ))}
-          </div> */}
+          </div>
         </div>
 
         <div data-hero-terminal>
