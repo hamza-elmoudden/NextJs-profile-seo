@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   title: "Contact",
   description:
     "Contact Hamza Elmouddane about backend systems, scalable web applications, AI pipelines, and digital product development.",
+   alternates:{
+    canonical:'/contact'
+   } 
 };
 
 const WHAT_TO_SEND = [
