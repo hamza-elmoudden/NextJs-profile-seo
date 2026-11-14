@@ -30,6 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
   // const settings = await getSiteSettings();
 
   return {
+    metadataBase: process.env.NEXT_PUBLIC_SITE_URL,
     // title: {
     //   default: settings?.siteTitle ?? settings?.siteName ?? "Hamza Elmouddane — Backend & AI Engineer",
     //   template: `%s — ${settings?.siteName ?? "Hamza Elmouddane"}`,
@@ -45,6 +46,10 @@ export async function generateMetadata(): Promise<Metadata> {
     verification: {
       google: "HfBXNpLNqLlROstqOfH-JOeN_Rk_VXq_dFDAhdKhSgw",
     },
+
+    alternates:{
+      canonical:'/'
+    }
 
   };
 }

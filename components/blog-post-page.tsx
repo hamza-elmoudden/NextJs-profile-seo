@@ -24,7 +24,6 @@ export function postMetadata(post: PostFull | null): Metadata {
   const title = post.seo?.metaTitle ?? post.title;
   const description = post.seo?.metaDescription ?? post.excerpt ?? undefined;
   const ogImageUrl = post.seo?.ogImage?.asset?.url ?? post.coverImage?.asset?.url;
-  console.log(post.slug)
   return {
     title: `${title}`,
     description,
