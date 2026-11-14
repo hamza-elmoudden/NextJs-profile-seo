@@ -115,7 +115,7 @@ export default function Footer() {
       node: (
         <section className="h-full overflow-hidden rounded-xl border border-edge bg-card">
           <PaneBar title="~/social" />
-          <p className="px-[18px] pt-4 text-cream">
+          <p className="px-4.5 pt-4 text-cream">
             <span className="mr-2 font-medium text-amber">&gt;</span>ping ./social
           </p>
           <ul className="px-2.5 pb-3.5 pt-1">
@@ -125,8 +125,8 @@ export default function Footer() {
                 email
               </a>
             </li>
-            {socialLinks.map((link) => (
-              <li key={link._key}>
+            {socialLinks.map((link,id) => (
+              <li key={id}>
                 <a
                   href={link.url}
                   target={link.url.startsWith("http") ? "_blank" : undefined}
