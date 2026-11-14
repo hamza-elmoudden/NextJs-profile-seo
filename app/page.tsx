@@ -30,9 +30,9 @@ export async function generateMetadata():Promise<Metadata> {
         openGraph: settings?.defaultOgImage?.asset.url
           ? { images: [{ url: settings.defaultOgImage.asset.url }] }
           : undefined,
-        alternates:{
-          canonical:'/'
-        },
+        // alternates:{
+        //   canonical:'/'
+        // },
       }
   }
 
