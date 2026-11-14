@@ -70,7 +70,11 @@ export const GET_FEATURED_POSTS = `
 `;
 
 export async function getFeaturedPosts(): Promise<Post[]> {
-  return sanityClient.fetch<Post[]>(GET_FEATURED_POSTS, {}, POSTS_FETCH_OPTIONS);
+  return sanityClient.fetch<Post[]>(
+    GET_FEATURED_POSTS,
+    {},
+    POSTS_FETCH_OPTIONS,
+  );
 }
 
 export async function getFeaturedPostCards(): Promise<BlogPost[]> {
@@ -128,26 +132,34 @@ export const GET_POST_BY_SLUG = `
 `;
 
 export async function getPostBySlug(slug: string): Promise<Post | null> {
-  return sanityClient.fetch<Post | null>(GET_POST_BY_SLUG, { slug }, POSTS_FETCH_OPTIONS);
+  return sanityClient.fetch<Post | null>(
+    GET_POST_BY_SLUG,
+    { slug },
+    POSTS_FETCH_OPTIONS,
+  );
 }
 
 export type PostFull = Post & {
   updatedAt: string | null;
   body: unknown[] | null;
   jsonLd: string | null;
-  author: (PostAuthor & {
-    role: string | null;
-    bio: unknown[] | null;
-    socialLinks: { label?: string; url?: string }[] | null;
-  }) | null;
-  relatedPosts: {
-    _id: string;
-    title: string;
-    slug: string | null;
-    excerpt: string | null;
-    publishedAt: string | null;
-    category: PostTaxonomy | null;
-  }[] | null;
+  author:
+    | (PostAuthor & {
+        role: string | null;
+        bio: unknown[] | null;
+        socialLinks: { label?: string; url?: string }[] | null;
+      })
+    | null;
+  relatedPosts:
+    | {
+        _id: string;
+        title: string;
+        slug: string | null;
+        excerpt: string | null;
+        publishedAt: string | null;
+        category: PostTaxonomy | null;
+      }[]
+    | null;
   seo: {
     metaTitle?: string;
     metaDescription?: string;
@@ -194,7 +206,9 @@ export const GET_POST_FULL_BY_SLUG = `
   }
 `;
 
-export async function getPostFullBySlug(slug: string): Promise<PostFull | null> {
+export async function getPostFullBySlug(
+  slug: string,
+): Promise<PostFull | null> {
   return sanityClient.fetch<PostFull | null>(
     GET_POST_FULL_BY_SLUG,
     { slug },
@@ -209,7 +223,9 @@ export const GET_ALL_POST_SLUGS = `
   }
 `;
 
-export async function getAllPostSlugs(): Promise<{ slug: string; category: string | null }[]> {
+export async function getAllPostSlugs(): Promise<
+  { slug: string; category: string | null }[]
+> {
   return sanityClient.fetch<{ slug: string; category: string | null }[]>(
     GET_ALL_POST_SLUGS,
     {},
