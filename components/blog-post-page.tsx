@@ -24,11 +24,14 @@ export function postMetadata(post: PostFull | null): Metadata {
   const title = post.seo?.metaTitle ?? post.title;
   const description = post.seo?.metaDescription ?? post.excerpt ?? undefined;
   const ogImageUrl = post.seo?.ogImage?.asset?.url ?? post.coverImage?.asset?.url;
-
+  console.log(post.slug)
   return {
-    title: `${title} — Hamza Elmouddane`,
+    title: `${title}`,
     description,
-    alternates: post.seo?.canonicalUrl ? { canonical: post.seo.canonicalUrl } : undefined,
+    // alternates: post.seo?.canonicalUrl ? { canonical: post.seo.canonicalUrl } : undefined,
+    alternates:{
+      canonical:post.seo?.canonicalUrl
+    },
     robots: post.seo?.noIndex ? { index: false, follow: false } : undefined,
     openGraph: {
       title: post.seo?.ogTitle ?? title,
