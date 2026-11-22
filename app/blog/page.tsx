@@ -7,39 +7,43 @@ import SectionHeader from "@/components/section-header";
 import ShinyText from "@/components/shiny-text";
 import { getCategories, getPostsPage } from "@/lib/blog-page";
 import { BLOG_POSTS, PROJECTS, type Project } from "@/lib/content";
-import { getPostBySlug, getPosts, postToCard, type Post } from "@/lib/posts";
+import { getPostBySlug, getPosts, postsToCards, type Post } from "@/lib/posts";
 import { getProjects, projectToCard } from "@/lib/projects";
+import {
+  SITE_NAME,
+  WEBSITE_ID,
+  absoluteUrl,
+  breadcrumbSchema,
+  buildMetadata,
+  graph,
+  jsonLdString,
+  parseJsonLd,
+  personRef,
+} from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const postsPage = await getPostsPage();
-  const title = postsPage?.metaTitle ?? "Blog — Hamza Elmouddane";
-  const description =
-    postsPage?.metaDescription ??
-    "Articles on NestJS, FastAPI, system design, and building scalable products — written by Hamza Elmouddane.";
-  const ogImageUrl = postsPage?.ogImage?.asset.url;
-
-  return {
-    title,
-    description,
-    alternates: {
-      canonical: postsPage?.canonicalUrl ?? 'blog'
-    },
-    robots: postsPage?.noIndex ? { index: false, follow: false } : undefined,
-    openGraph: {
-      title: postsPage?.ogTitle ?? title,
-      description: postsPage?.ogDescription ?? description,
-      url: postsPage?.canonicalUrl ?? "/blog",
-      images: ogImageUrl ? [{ url: ogImageUrl }] : undefined,
-    },
-    twitter: {
-      card: postsPage?.twitterCard ?? "summary_large_image",
-      title: postsPage?.ogTitle ?? title,
-      description: postsPage?.ogDescription ?? description,
-      images: ogImageUrl ? [ogImageUrl] : undefined,
-    },
-  };
+  return buildMetadata({
+    title: postsPage?.metaTitle ?? "Blog",
+    description:
+      postsPage?.metaDescription ??
+      "Articles on NestJS, FastAPI, Go, system design, AI/LLM engineering, and building scalable backends — written by Hamza Elmouddane.",
+    path: postsPage?.canonicalUrl ?? "/blog",
+    noIndex: postsPage?.noIndex,
+    ogTitle: postsPage?.ogTitle,
+    ogDescription: postsPage?.ogDescription,
+    image: postsPage?.ogImage?.asset.url,
+    twitterCard: postsPage?.twitterCard ?? undefined,
+    keywords: [
+      "Backend Engineering Blog",
+      "NestJS Tutorials",
+      "FastAPI Tutorials",
+      "System Design Articles",
+      "AI Engineering Blog",
+    ],
+  });
 }
 
 function FeaturedPost({ post }: { post?: Post | null }) {
@@ -139,12 +143,8 @@ function FeaturedPost({ post }: { post?: Post | null }) {
   );
 }
 
-export default async function Blog({
-  searchParams,
-}: {
-  searchParams: Promise<{ category?: string }>;
-}) {
-  const { category } = await searchParams;
+// Legacy /blog?category=x URLs are 308-redirected to /blog/x in proxy.ts.
+export default async function Blog() {
 
   let previewProjects: Project[] = PROJECTS.slice(0, 3);
   try {
@@ -166,15 +166,7 @@ export default async function Blog({
     .map((p) => p.slug)
     .filter((s): s is string => Boolean(s));
   const cardPosts =
-    sanityPosts.length > 0
-      ? [...sanityPosts]
-          .sort(
-            (a, b) =>
-              Number(pinnedSlugs.includes(b.slug) || b.featured) -
-              Number(pinnedSlugs.includes(a.slug) || a.featured),
-          )
-          .map((p) => postToCard(p, pinnedSlugs))
-      : BLOG_POSTS;
+    sanityPosts.length > 0 ? postsToCards(sanityPosts, pinnedSlugs) : BLOG_POSTS;
 
   const featuredSlug =
     postsPage?.featuredPost?.slug ??
@@ -182,11 +174,6 @@ export default async function Blog({
     null;
   const featuredPost = featuredSlug ? await getPostBySlug(featuredSlug) : null;
 
-  const activeCategory = category ?? "all";
-  const filteredPosts =
-    activeCategory === "all"
-      ? cardPosts
-      : cardPosts.filter((p) => p.tags.includes(activeCategory));
 
   const heading = postsPage?.heading ?? "Blog";
   const subheading =
@@ -196,34 +183,42 @@ export default async function Blog({
   const newsletterLabel = postsPage?.newsletterCtaLabel ?? "Get new articles in your inbox";
   const newsletterSubtext = postsPage?.newsletterCtaSubtext ?? "No spam. Unsubscribe any time.";
 
-  let jsonLdScript: string | null = null;
-  if (postsPage?.jsonLd) {
-    try {
-      JSON.parse(postsPage.jsonLd);
-      jsonLdScript = postsPage.jsonLd;
-    } catch {
-      jsonLdScript = null;
-    }
-  }
-  if (!jsonLdScript && (postsPage?.structuredDataName || postsPage?.structuredDataDescription)) {
-    jsonLdScript = JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "Blog",
-      name: postsPage.structuredDataName ?? "Blog — Hamza Elmouddane",
-      description:
-        postsPage.structuredDataDescription ??
-        "A blog about backend engineering, architecture, and building products.",
-    });
-  }
+  const blogUrl = absoluteUrl("/blog");
+  const jsonLdScript =
+    parseJsonLd(postsPage?.jsonLd) ??
+    jsonLdString(
+      graph(
+        {
+          "@type": "Blog",
+          "@id": `${blogUrl}#blog`,
+          url: blogUrl,
+          name: postsPage?.structuredDataName ?? `Blog — ${SITE_NAME}`,
+          description:
+            postsPage?.structuredDataDescription ??
+            "A blog about backend engineering, system design, AI engineering, and building products.",
+          inLanguage: "en",
+          isPartOf: { "@id": WEBSITE_ID },
+          author: personRef,
+          publisher: personRef,
+          blogPost: sanityPosts.slice(0, 20).map((p) => ({
+            "@type": "BlogPosting",
+            headline: p.title,
+            url: absoluteUrl(`/blog/${p.category?.slug ?? "post"}/${p.slug}`),
+            datePublished: p.publishedAt ?? undefined,
+            image: p.coverImage?.asset?.url ?? undefined,
+            author: personRef,
+          })),
+        },
+        breadcrumbSchema([
+          { name: "Home", path: "/" },
+          { name: "Blog", path: "/blog" },
+        ]),
+      ),
+    );
 
   return (
     <>
-      {jsonLdScript ? (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: jsonLdScript }}
-        />
-      ) : null}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript }} />
       {/* ── BLOG HERO ─────────────────────────────── */}
       <section className="relative overflow-hidden border-b border-edge py-[72px]">
         <div className="bg-grid-faint pointer-events-none absolute inset-0" aria-hidden />
@@ -257,15 +252,13 @@ export default async function Blog({
 
       {/* ── FILTERS + POSTS GRID ──────────────────── */}
       <BlogPosts
-        key={activeCategory}
-        posts={filteredPosts}
+        posts={cardPosts}
         categories={
           categories.length > 0
             ? categories.map((c) => ({ id: c.slug, label: c.title }))
             : undefined
         }
         showFilter={showCategoryFilter}
-        activeCategory={activeCategory}
       />
 
       {/* ── FEATURED PROJECTS ─────────────────────── */}
