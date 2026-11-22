@@ -9,6 +9,18 @@ import { getSiteSettings } from "@/lib/site-settings";
 import StoreProvider from "@/components/store-provider";
 import "./globals.css";
 import Script from "next/script";
+import {
+  SITE_DESCRIPTION,
+  SITE_KEYWORDS,
+  SITE_LOCALE,
+  SITE_NAME,
+  SITE_TITLE,
+  SITE_URL,
+  graph,
+  jsonLdString,
+  personSchema,
+  websiteSchema,
+} from "@/lib/seo";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
@@ -27,35 +39,76 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-  // const settings = await getSiteSettings();
+  let settings: Awaited<ReturnType<typeof getSiteSettings>> = null;
+  try {
+    settings = await getSiteSettings();
+  } catch {
+    settings = null;
+  }
+  const description = settings?.siteDescription ?? SITE_DESCRIPTION;
+  const ogImage = settings?.defaultOgImage?.asset.url;
 
   return {
-    metadataBase: process.env.NEXT_PUBLIC_SITE_URL,
-    // title: {
-    //   default: settings?.siteTitle ?? settings?.siteName ?? "Hamza Elmouddane — Backend & AI Engineer",
-    //   template: `%s — ${settings?.siteName ?? "Hamza Elmouddane"}`,
-    // },
-
-    // description:
-    //   settings?.siteDescription ??
-    //   "Backend & AI Engineer based in Morocco. NestJS · FastAPI · Go · TypeScript. I build systems. I ship backends. I engineer the invisible.",
-    // openGraph: settings?.defaultOgImage?.asset.url
-    //   ? { images: [{ url: settings.defaultOgImage.asset.url }] }
-    //   : undefined,
-      
+    metadataBase: new URL(SITE_URL),
+    alternates: { languages: { en: "/", "x-default": "/" } },
+    title: {
+      default: settings?.siteTitle ?? SITE_TITLE,
+      template: `%s — ${SITE_NAME}`,
+    },
+    description,
+    applicationName: SITE_NAME,
+    keywords: SITE_KEYWORDS,
+    authors: [{ name: SITE_NAME, url: SITE_URL }],
+    creator: SITE_NAME,
+    publisher: SITE_NAME,
+    category: "technology",
+    formatDetection: { email: false, address: false, telephone: false },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+        "max-video-preview": -1,
+      },
+    },
+    openGraph: {
+      type: "website",
+      siteName: SITE_NAME,
+      locale: SITE_LOCALE,
+      url: SITE_URL,
+      title: settings?.siteTitle ?? SITE_TITLE,
+      description,
+      images: ogImage ? [{ url: ogImage, alt: SITE_TITLE }] : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: settings?.siteTitle ?? SITE_TITLE,
+      description,
+      images: ogImage ? [ogImage] : undefined,
+    },
     verification: {
       google: "HfBXNpLNqLlROstqOfH-JOeN_Rk_VXq_dFDAhdKhSgw",
     },
-
-    alternates:{
-      canonical:'/'
-    }
-
   };
 }
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const settings = await getSiteSettings();
+  const siteJsonLd = jsonLdString(
+    graph(
+      personSchema({
+        sameAs: (settings?.socialLinks ?? [])
+          .map((l) => l.url)
+          .filter((u): u is string => Boolean(u) && /^https?:\/\//.test(u)),
+        image: settings?.logo?.asset?.url ?? null,
+        email: settings?.email ?? null,
+      }),
+      websiteSchema(),
+    ),
+  );
 
   return (
     <html
@@ -80,6 +133,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       
       <body className="flex min-h-full flex-col">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: siteJsonLd }} />
         <StoreProvider settings={settings}>
           <BootScreen />
           <ScrollToTop />

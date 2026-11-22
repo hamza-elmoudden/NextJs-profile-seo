@@ -3,8 +3,8 @@ import Link from "next/link";
 import PathTerminal from "@/components/not-found-terminal";
 
 export const metadata: Metadata = {
-  title: "404 — Page Not Found · Hamza Elmouddane",
-  robots: { index: false },
+  title: { absolute: "404 — Page Not Found · Hamza Elmouddane" },
+  robots: { index: false, follow: true },
 };
 
 export default function NotFound() {
