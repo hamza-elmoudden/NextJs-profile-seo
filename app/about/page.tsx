@@ -4,29 +4,44 @@ import PortableBody from "@/components/portable-body";
 import ShinyText from "@/components/shiny-text";
 import Terminal from "@/components/terminal";
 import { getAboutPage } from "@/lib/about-page";
+import {
+  SITE_NAME,
+  WEBSITE_ID,
+  absoluteUrl,
+  breadcrumbSchema,
+  buildMetadata,
+  graph,
+  jsonLdString,
+  parseJsonLd,
+  personRef,
+} from "@/lib/seo";
 
 // ISR: revalidate this page every 30 minutes
 export const revalidate = 1800;
 
+const ABOUT_DESCRIPTION =
+  "About Hamza Elmouddane, a self-taught Backend & AI Engineer working remotely with teams worldwide: NestJS, FastAPI, Go, " +
+  "CQRS and event-driven systems, LLM integrations, and production-grade APIs.";
+
 export async function generateMetadata(): Promise<Metadata> {
   const about = await getAboutPage();
   const seo = about?.seo;
-  return {
-    title: seo?.metaTitle ?? "About — Hamza Elmouddane",
-    description:
-      seo?.metaDescription ??
-      "Backend & AI Engineer based in Morocco. Self-taught, production-obsessed, building systems that last.",
-    alternates:{
-      canonical:seo?.canonicalUrl ?? 'about'
-    },
-    robots: seo?.noIndex ? { index: false, follow: false } : undefined,
-    openGraph: {
-      title: seo?.ogTitle ?? seo?.metaTitle ?? "About — Hamza Elmouddane",
-      description: seo?.ogDescription ?? seo?.metaDescription ?? undefined,
-      url: seo?.canonicalUrl ?? undefined,
-      images: seo?.ogImage?.asset?.url ? [{ url: seo.ogImage.asset.url }] : undefined,
-    },
-  };
+  return buildMetadata({
+    title: seo?.metaTitle ?? "About",
+    description: seo?.metaDescription ?? ABOUT_DESCRIPTION,
+    path: seo?.canonicalUrl ?? "/about",
+    noIndex: seo?.noIndex,
+    ogTitle: seo?.ogTitle ?? seo?.metaTitle,
+    ogDescription: seo?.ogDescription,
+    image: seo?.ogImage?.asset?.url ?? about?.profileImage?.asset?.url,
+    imageAlt: SITE_NAME,
+    keywords: [
+      "About Hamza Elmouddane",
+      "Backend Engineer Resume",
+      "Self-taught Software Engineer",
+      "Remote Software Engineer",
+    ],
+  });
 }
 
 const TIMELINE = [
@@ -166,21 +181,31 @@ export default async function About() {
   const biography = about?.biography?.length ? about.biography : null;
   const location = about?.location ?? "Morocco";
 
-  let jsonLdScript: string | null = null;
-  if (about?.jsonLd) {
-    try {
-      JSON.parse(about.jsonLd);
-      jsonLdScript = about.jsonLd;
-    } catch {
-      jsonLdScript = null;
-    }
-  }
+  const jsonLdScript =
+    parseJsonLd(about?.jsonLd) ??
+    jsonLdString(
+      graph(
+        {
+          "@type": "ProfilePage",
+          "@id": `${absoluteUrl("/about")}#profilepage`,
+          url: absoluteUrl("/about"),
+          name: `About ${SITE_NAME}`,
+          description: about?.introduction ?? ABOUT_DESCRIPTION,
+          isPartOf: { "@id": WEBSITE_ID },
+          mainEntity: personRef,
+          primaryImageOfPage: about?.profileImage?.asset?.url ?? undefined,
+          inLanguage: "en",
+        },
+        breadcrumbSchema([
+          { name: "Home", path: "/" },
+          { name: "About", path: "/about" },
+        ]),
+      ),
+    );
 
   return (
     <>
-      {jsonLdScript ? (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript }} />
-      ) : null}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript }} />
       {/* ── ABOUT HERO ─────────────────────────────── */}
       <section className="relative overflow-hidden border-b border-edge py-[60px] min-[560px]:py-[72px] min-[860px]:py-[80px]">
         <div className="bg-grid-faint pointer-events-none absolute inset-0" aria-hidden />
