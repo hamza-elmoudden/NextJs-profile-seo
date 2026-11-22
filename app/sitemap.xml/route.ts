@@ -42,6 +42,14 @@ const GET_SITEMAP_PROJECTS = `
   }
 `;
 
+// Only categories with at least one post: empty category pages are noindex.
+const GET_SITEMAP_CATEGORIES = `
+  *[_type == "category" && defined(slug.current) && count(*[_type == "post" && references(^._id)]) > 0] {
+    "slug": slug.current,
+    "_updatedAt": _updatedAt
+  }
+`;
+
 const GET_SITEMAP_SERVICES = `
   *[_type == "service" && defined(slug.current)] | order(_updatedAt desc) {
     "slug": slug.current,
@@ -81,6 +89,11 @@ type SitemapProject = {
   imageAlt: string | null;
   imageCaption: string | null;
   _createdAt: string;
+  _updatedAt: string;
+};
+
+type SitemapCategory = {
+  slug: string;
   _updatedAt: string;
 };
 
@@ -138,8 +151,13 @@ export async function GET() {
     "",
   );
 
-  const [posts, projects, services] = await Promise.all([
+  const [posts, categories, projects, services] = await Promise.all([
     sanityClient.fetch<SitemapPost[]>(GET_SITEMAP_POSTS, {}, FETCH_OPTIONS("posts")),
+    sanityClient.fetch<SitemapCategory[]>(
+      GET_SITEMAP_CATEGORIES,
+      {},
+      FETCH_OPTIONS("posts"),
+    ),
     sanityClient.fetch<SitemapProject[]>(
       GET_SITEMAP_PROJECTS,
       {},
@@ -163,6 +181,11 @@ export async function GET() {
     { loc: `${baseUrl}/services`, changeFrequency: "monthly", priority: 0.7 },
     { loc: `${baseUrl}/about`, changeFrequency: "monthly", priority: 0.7 },
     { loc: `${baseUrl}/contact`, changeFrequency: "yearly", priority: 0.5 },
+    ...categories.map((category): SitemapUrl => ({
+      loc: `${baseUrl}/blog/${category.slug}`,
+      changeFrequency: "weekly",
+      priority: 0.7,
+    })),
     ...posts.map((post): SitemapUrl => ({
       loc: `${baseUrl}/blog/${post.category ?? "post"}/${post.slug}`,
       lastmod: post.updatedAt ?? post.publishedAt,
