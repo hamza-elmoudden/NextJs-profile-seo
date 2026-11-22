@@ -12,30 +12,41 @@ import { getFeaturedProjects, projectToCard } from "@/lib/projects";
 import { getServices } from "@/lib/services";
 import { Metadata } from "next";
 import { getSiteSettings } from "@/lib/site-settings";
+import {
+  SITE_DESCRIPTION,
+  SITE_TITLE,
+  SITE_URL,
+  WEBSITE_ID,
+  buildMetadata,
+  graph,
+  jsonLdString,
+  parseJsonLd,
+  personRef,
+} from "@/lib/seo";
 
 
 
-export async function generateMetadata():Promise<Metadata> {
-    const settings = await getSiteSettings();
-    
-      return {
-        title: {
-          default: settings?.siteTitle ?? settings?.siteName ?? "Hamza Elmouddane — Backend & AI Engineer",
-          template: `%s — ${settings?.siteName ?? "Hamza Elmouddane"}`,
-        },
-    
-        description:
-          settings?.siteDescription ??
-          "Backend & AI Engineer based in Morocco. NestJS · FastAPI · Go · TypeScript. I build systems. I ship backends. I engineer the invisible.",
-        openGraph: settings?.defaultOgImage?.asset.url
-          ? { images: [{ url: settings.defaultOgImage.asset.url }] }
-          : undefined,
-        // alternates:{
-        //   canonical:'/'
-        // },
-      }
+export async function generateMetadata(): Promise<Metadata> {
+  let settings: Awaited<ReturnType<typeof getSiteSettings>> = null;
+  try {
+    settings = await getSiteSettings();
+  } catch {
+    settings = null;
   }
+  const title = settings?.siteTitle ?? SITE_TITLE;
 
+  return {
+    ...buildMetadata({
+      title,
+      description: settings?.siteDescription ?? SITE_DESCRIPTION,
+      path: "/",
+      image: settings?.defaultOgImage?.asset.url,
+      keywords: ["Software Engineer Portfolio", "Backend Engineer Portfolio", "Hire Backend Developer"],
+    }),
+    // Home shows the bare site title, not "<title> — Hamza Elmouddane".
+    title: { absolute: title },
+  };
+}
 
 export default async function Home() {
   let sanityServices: Awaited<ReturnType<typeof getServices>> = [];
@@ -64,30 +75,21 @@ export default async function Home() {
   }
   const services = sanityServices.length > 0 ? sanityServices : null;
 
-  let jsonLdScript: string | null = null;
-  if (homePage?.jsonLd) {
-    try {
-      JSON.parse(homePage.jsonLd);
-      jsonLdScript = homePage.jsonLd;
-    } catch {
-      jsonLdScript = null;
-    }
-  }
-  if (!jsonLdScript) {
-    jsonLdScript = JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "WebSite",
-      name: "Hamza Elmouddane — Backend & AI Engineer",
-      description:
-        "Portfolio of Hamza Elmouddane, a Backend & AI Engineer based in Morocco. NestJS, FastAPI, Go, TypeScript.",
-      author: {
-        "@type": "Person",
-        name: "Hamza Elmouddane",
-        jobTitle: "Backend & AI Engineer",
-        address: { "@type": "PostalAddress", addressCountry: "MA" },
-      },
-    });
-  }
+  const jsonLdScript =
+    parseJsonLd(homePage?.jsonLd) ??
+    jsonLdString(
+      graph({
+        "@type": "ProfilePage",
+        "@id": `${SITE_URL}/#profilepage`,
+        url: SITE_URL,
+        name: SITE_TITLE,
+        description: SITE_DESCRIPTION,
+        isPartOf: { "@id": WEBSITE_ID },
+        mainEntity: personRef,
+        about: personRef,
+        inLanguage: "en",
+      }),
+    );
   const blogPosts =
     featuredPosts.length > 0
       ? featuredPosts.map((post) => ({
