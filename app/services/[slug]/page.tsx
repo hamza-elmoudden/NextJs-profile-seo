@@ -4,6 +4,14 @@ import { notFound } from "next/navigation";
 import ContactStrip from "@/components/contact-strip";
 import PortableBody from "@/components/portable-body";
 import { getAllServiceSlugs, getServiceBySlug, getServices } from "@/lib/services";
+import {
+  absoluteUrl,
+  breadcrumbSchema,
+  buildMetadata,
+  graph,
+  jsonLdString,
+  personRef,
+} from "@/lib/seo";
 
 // ISR: revalidate service pages every 25 minutes; new slugs render on demand
 export const revalidate = 1500;
@@ -21,34 +29,24 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const service = await getServiceBySlug(slug);
-  if (!service) return { title: "Service not found — Hamza Elmouddane" };
+  if (!service) return { title: "Service not found", robots: { index: false } };
 
-  const title = service.seo?.metaTitle ?? service.title;
-  const description = service.seo?.metaDescription ?? service.shortDescription;
-
-  return {
-    title: `${title} — Hamza Elmouddane`,
-    description,
-    // alternates: service.seo?.canonicalUrl
-    //   ? { canonical: service.seo.canonicalUrl }
-    //   : undefined,
-    alternates:{
-      canonical:service.seo?.canonicalUrl
-    },
-    robots: service.seo?.noIndex ? { index: false, follow: false } : undefined,
-    openGraph: {
-      title: service.seo?.ogTitle ?? title,
-      description: service.seo?.ogDescription ?? description,
-      images: service.seo?.ogImage?.asset?.url
-        ? [{ url: service.seo.ogImage.asset.url }]
-        : undefined,
-    },
-    twitter: {
-      card: service.seo?.twitterCard ?? "summary_large_image",
-      title: service.seo?.ogTitle ?? title,
-      description: service.seo?.ogDescription ?? description,
-    },
-  };
+  return buildMetadata({
+    title: service.seo?.metaTitle ?? service.title,
+    description: service.seo?.metaDescription ?? service.shortDescription,
+    path: service.seo?.canonicalUrl ?? `/services/${slug}`,
+    noIndex: service.seo?.noIndex,
+    ogTitle: service.seo?.ogTitle,
+    ogDescription: service.seo?.ogDescription,
+    image: service.seo?.ogImage?.asset?.url,
+    twitterCard: service.seo?.twitterCard,
+    keywords: [
+      service.title,
+      `${service.title} Services`,
+      `Freelance ${service.title}`,
+      `Remote ${service.title}`,
+    ],
+  });
 }
 
 export default async function ServicePage({
@@ -63,22 +61,34 @@ export default async function ServicePage({
   const allServices = await getServices();
   const others = allServices.filter((s) => s._id !== service._id).slice(0, 3);
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Service",
-    name: service.title,
-    description: service.shortDescription,
-    provider: {
-      "@type": "Person",
-      name: "Hamza Elmouddane",
+  const serviceUrl = absoluteUrl(`/services/${slug}`);
+  const jsonLd = graph(
+    {
+      "@type": "Service",
+      "@id": `${serviceUrl}#service`,
+      url: serviceUrl,
+      name: service.title,
+      serviceType: service.title,
+      description: service.seo?.metaDescription ?? service.shortDescription,
+      provider: personRef,
+      areaServed: "Worldwide",
+      availableChannel: {
+        "@type": "ServiceChannel",
+        serviceUrl: absoluteUrl("/contact"),
+      },
     },
-  };
+    breadcrumbSchema([
+      { name: "Home", path: "/" },
+      { name: "Services", path: "/services" },
+      { name: service.title, path: `/services/${slug}` },
+    ]),
+  );
 
   return (
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdString(jsonLd) }}
       />
 
       {/* ── SERVICE HERO ──────────────────────────── */}

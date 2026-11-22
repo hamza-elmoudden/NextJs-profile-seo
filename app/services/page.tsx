@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { buildMetadata } from "@/lib/seo";
 import Link from "next/link";
 import ContactStrip from "@/components/contact-strip";
 import Reveal from "@/components/reveal";
@@ -10,14 +11,19 @@ import { getServices } from "@/lib/services";
 export const revalidate = 1500;
 
 export async function generateMetadata(): Promise<Metadata> {
-  return {
+  return buildMetadata({
     title: "Services",
     description:
-      "Backend development, AI engineering, and infrastructure services — APIs, pipelines, and systems that have to work, by Hamza Elmouddane.",
-    alternates:{
-      canonical:'/services'
-    }
-  };
+      "Backend development, AI engineering, and infrastructure services by Hamza Elmouddane — APIs, LLM pipelines, and production systems built to scale.",
+    path: "/services",
+    keywords: [
+      "Backend Development Services",
+      "AI Engineering Services",
+      "API Development",
+      "LLM Integration Services",
+      "Freelance Backend Development",
+    ],
+  });
 }
 
 export default async function Services() {
