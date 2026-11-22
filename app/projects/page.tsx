@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { buildMetadata } from "@/lib/seo";
 import Link from "next/link";
 import ContactStrip from "@/components/contact-strip";
 import BlogPosts from "@/components/blog-posts";
@@ -11,14 +12,13 @@ import { getPosts, postToCard } from "@/lib/posts";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildMetadata({
   title: "Projects",
   description:
-    "Browse the projects built by Hamza Elmouddane — scalable web applications, backend systems, and digital products using NestJS, FastAPI, React, and more.",
-  alternates:{
-    canonical:'/projects'
-  }
-};
+    "Projects by Hamza Elmouddane: backend systems, SaaS products, AI applications, and open-source libraries built with NestJS, FastAPI, Go, React, and TypeScript.",
+  path: "/projects",
+  keywords: ["Backend Projects", "NestJS Projects", "FastAPI Projects", "Open Source Projects", "Software Engineer Portfolio"],
+});
 
 const TYPE_BADGE: Record<string, string> = {
   "Client Work": "text-amber border-[rgba(255,107,0,0.3)]",

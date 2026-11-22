@@ -4,6 +4,15 @@ import { notFound } from "next/navigation";
 import ContactStrip from "@/components/contact-strip";
 import PortableBody from "@/components/portable-body";
 import { getAllProjectSlugs, getProjectBySlug, getProjects } from "@/lib/projects";
+import {
+  absoluteUrl,
+  breadcrumbSchema,
+  buildMetadata,
+  graph,
+  jsonLdString,
+  parseJsonLd,
+  personRef,
+} from "@/lib/seo";
 
 // ISR: statically generate all projects at build time, then revalidate each
 // page in the background at most every 60 seconds. dynamicParams (default
@@ -49,31 +58,21 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const project = await getProjectBySlug(slug);
-  if (!project) return { title: "Project not found — Hamza Elmouddane" };
+  if (!project) return { title: "Project not found", robots: { index: false } };
 
-  const title = project.seo?.metaTitle ?? project.title;
-  const description = project.seo?.metaDescription ?? project.shortDescription;
-  const ogImageUrl = project.seo?.ogImage?.asset?.url ?? project.featuredImage?.asset?.url;
-
-  return {
-    title: `${title}`,
-    description,
-    alternates: {
-      canonical:project.seo?.canonicalUrl
-    },
-    robots: project.seo?.noIndex ? { index: false, follow: false } : undefined,
-    openGraph: {
-      title: project.seo?.ogTitle ?? title,
-      description: project.seo?.ogDescription ?? description,
-      images: ogImageUrl ? [{ url: ogImageUrl }] : undefined,
-    },
-    twitter: {
-      card: project.seo?.twitterCard ?? "summary_large_image",
-      title: project.seo?.ogTitle ?? title,
-      description: project.seo?.ogDescription ?? description,
-      images: ogImageUrl ? [ogImageUrl] : undefined,
-    },
-  };
+  const tech = (project.technologies ?? []).map((t) => t.name);
+  return buildMetadata({
+    title: project.seo?.metaTitle ?? project.title,
+    description: project.seo?.metaDescription ?? project.shortDescription,
+    path: project.seo?.canonicalUrl ?? `/projects/${slug}`,
+    noIndex: project.seo?.noIndex,
+    ogTitle: project.seo?.ogTitle,
+    ogDescription: project.seo?.ogDescription,
+    image: project.seo?.ogImage?.asset?.url ?? project.featuredImage?.asset?.url,
+    imageAlt: project.featuredImage?.alt ?? project.title,
+    twitterCard: project.seo?.twitterCard,
+    keywords: [project.title, ...tech, ...tech.map((t) => `${t} Project`)],
+  });
 }
 
 export default async function ProjectPage({
@@ -95,31 +94,38 @@ export default async function ProjectPage({
   const coverUrl = project.featuredImage?.asset?.url;
   const gallery = (project.gallery ?? []).filter((g) => g?.asset?.url);
 
-  let jsonLdScript: string | null = null;
-  if (project.jsonLd) {
-    try {
-      JSON.parse(project.jsonLd);
-      jsonLdScript = project.jsonLd;
-    } catch {
-      jsonLdScript = null;
-    }
-  }
-  if (!jsonLdScript) {
-    jsonLdScript = JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      name: project.title,
-      description: project.shortDescription,
-      applicationCategory: "DeveloperApplication",
-      operatingSystem: "Web",
-      author: {
-        "@type": "Person",
-        name: "Hamza Elmouddane",
-      },
-      url: project.liveUrl ?? undefined,
-      image: coverUrl,
-    });
-  }
+  const projectUrl = absoluteUrl(`/projects/${slug}`);
+  const tech = (project.technologies ?? []).map((t) => t.name);
+  const jsonLdScript =
+    parseJsonLd(project.jsonLd) ??
+    jsonLdString(
+      graph(
+        {
+          "@type": project.githubUrl && !project.liveUrl ? "SoftwareSourceCode" : "CreativeWork",
+          "@id": `${projectUrl}#project`,
+          url: projectUrl,
+          mainEntityOfPage: projectUrl,
+          name: project.title,
+          headline: project.title,
+          description: project.seo?.metaDescription ?? project.shortDescription,
+          image: coverUrl,
+          author: personRef,
+          creator: personRef,
+          dateCreated: project.startDate ?? undefined,
+          dateModified: project.endDate ?? undefined,
+          keywords: tech.join(", ") || undefined,
+          codeRepository: project.githubUrl ?? undefined,
+          programmingLanguage: project.githubUrl && !project.liveUrl ? tech : undefined,
+          sameAs: [project.liveUrl, project.githubUrl].filter(Boolean),
+          inLanguage: "en",
+        },
+        breadcrumbSchema([
+          { name: "Home", path: "/" },
+          { name: "Projects", path: "/projects" },
+          { name: project.title, path: `/projects/${slug}` },
+        ]),
+      ),
+    );
 
   return (
     <>
