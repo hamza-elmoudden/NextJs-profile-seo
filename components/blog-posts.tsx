@@ -129,7 +129,7 @@ export default function BlogPosts({
             {filterCategories.map((cat) => (
               <Link
                 key={cat.id}
-                href={`/blog?category=${cat.id}`}
+                href={`/blog/${cat.id}`}
                 className={filterClass(activeCategory === cat.id)}
               >
                 {cat.label}

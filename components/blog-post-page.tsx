@@ -2,6 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import PortableBody from "@/components/portable-body";
 import type { PostFull } from "@/lib/posts";
+import {
+  SITE_NAME,
+  absoluteUrl,
+  breadcrumbSchema,
+  buildMetadata,
+  graph,
+  jsonLdString,
+  parseJsonLd,
+  personRef,
+} from "@/lib/seo";
 
 function formatDate(iso: string | null) {
   return iso
@@ -18,35 +28,40 @@ function estimateReadTime(post: PostFull): number {
   return Math.max(1, Math.ceil(text / 200));
 }
 
-export function postMetadata(post: PostFull | null): Metadata {
-  if (!post) return { title: "Post not found — Hamza Elmouddane" };
+function postPath(post: PostFull): string {
+  return `/blog/${post.category?.slug ?? "post"}/${post.slug}`;
+}
 
-  const title = post.seo?.metaTitle ?? post.title;
-  const description = post.seo?.metaDescription ?? post.excerpt ?? undefined;
-  const ogImageUrl = post.seo?.ogImage?.asset?.url ?? post.coverImage?.asset?.url;
-  return {
-    title: `${title}`,
-    description,
-    // alternates: post.seo?.canonicalUrl ? { canonical: post.seo.canonicalUrl } : undefined,
-    alternates:{
-      canonical:post.seo?.canonicalUrl
+function postKeywords(post: PostFull): string[] {
+  return [
+    ...(post.category ? [post.category.title] : []),
+    ...(post.tags ?? []).map((t) => t.title),
+  ].filter(Boolean);
+}
+
+export function postMetadata(post: PostFull | null): Metadata {
+  if (!post) return { title: "Post not found", robots: { index: false } };
+
+  const keywords = postKeywords(post);
+  return buildMetadata({
+    title: post.seo?.metaTitle ?? post.title,
+    description: post.seo?.metaDescription ?? post.excerpt,
+    path: post.seo?.canonicalUrl ?? postPath(post),
+    noIndex: post.seo?.noIndex,
+    ogTitle: post.seo?.ogTitle,
+    ogDescription: post.seo?.ogDescription,
+    image: post.seo?.ogImage?.asset?.url ?? post.coverImage?.asset?.url,
+    imageAlt: post.coverImage?.alt ?? post.title,
+    twitterCard: post.seo?.twitterCard,
+    keywords,
+    article: {
+      publishedTime: post.publishedAt,
+      modifiedTime: post.updatedAt ?? post.publishedAt,
+      authors: [post.author?.name ?? SITE_NAME],
+      section: post.category?.title,
+      tags: keywords,
     },
-    robots: post.seo?.noIndex ? { index: false, follow: false } : undefined,
-    openGraph: {
-      title: post.seo?.ogTitle ?? title,
-      description: post.seo?.ogDescription ?? description,
-      type: "article",
-      publishedTime: post.publishedAt ?? undefined,
-      modifiedTime: post.updatedAt ?? undefined,
-      images: ogImageUrl ? [{ url: ogImageUrl }] : undefined,
-    },
-    twitter: {
-      card: post.seo?.twitterCard ?? "summary_large_image",
-      title: post.seo?.ogTitle ?? title,
-      description: post.seo?.ogDescription ?? description,
-      images: ogImageUrl ? [ogImageUrl] : undefined,
-    },
-  };
+  });
 }
 
 export default function BlogPostPage({ post }: { post: PostFull }) {
@@ -59,32 +74,43 @@ export default function BlogPostPage({ post }: { post: PostFull }) {
   );
   const coverUrl = post.coverImage?.asset?.url;
 
-  let jsonLdScript: string | null = null;
-  if (post.jsonLd) {
-    try {
-      JSON.parse(post.jsonLd);
-      jsonLdScript = post.jsonLd;
-    } catch {
-      jsonLdScript = null;
-    }
-  }
-  if (!jsonLdScript) {
-    jsonLdScript = JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "BlogPosting",
-      headline: post.title,
-      description: post.excerpt ?? undefined,
-      datePublished: post.publishedAt ?? undefined,
-      dateModified: post.updatedAt ?? post.publishedAt ?? undefined,
-      image: coverUrl,
-      author: post.author
-        ? {
-            "@type": "Person",
-            name: post.author.name,
-          }
-        : undefined,
-    });
-  }
+  const postUrl = absoluteUrl(postPath(post));
+  const isSiteOwner = !post.author || post.author.name === SITE_NAME;
+  const author = isSiteOwner
+    ? personRef
+    : { "@type": "Person", name: post.author!.name };
+  const jsonLdScript =
+    parseJsonLd(post.jsonLd) ??
+    jsonLdString(
+      graph(
+        {
+          "@type": "BlogPosting",
+          "@id": `${postUrl}#article`,
+          url: postUrl,
+          mainEntityOfPage: { "@type": "WebPage", "@id": postUrl },
+          headline: post.title,
+          description: post.seo?.metaDescription ?? post.excerpt ?? undefined,
+          datePublished: post.publishedAt ?? undefined,
+          dateModified: post.updatedAt ?? post.publishedAt ?? undefined,
+          image: coverUrl,
+          author,
+          publisher: personRef,
+          isPartOf: { "@id": `${absoluteUrl("/blog")}#blog` },
+          articleSection: post.category?.title,
+          keywords: postKeywords(post).join(", ") || undefined,
+          timeRequired: `PT${readTime}M`,
+          inLanguage: "en",
+        },
+        breadcrumbSchema([
+          { name: "Home", path: "/" },
+          { name: "Blog", path: "/blog" },
+          ...(post.category?.slug
+            ? [{ name: post.category.title, path: `/blog/${post.category.slug}` }]
+            : []),
+          { name: post.title, path: postPath(post) },
+        ]),
+      ),
+    );
 
   return (
     <>
