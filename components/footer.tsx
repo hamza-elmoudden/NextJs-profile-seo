@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAppSelector } from "@/lib/hooks";
@@ -67,8 +67,12 @@ export default function Footer() {
   const email = settings?.email ?? "hamzaelmouddanedev@gmail.com";
   const time = useClock();
   const pathname = usePathname();
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- pathname is the reshuffle trigger
-  const order = useMemo(() => shuffle([0, 1, 2]), [pathname]);
+  // Deterministic initial order so SSR and hydration match; shuffle client-side only.
+  const [order, setOrder] = useState([0, 1, 2]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- random order must be client-only to avoid hydration mismatch
+    setOrder(shuffle([0, 1, 2]));
+  }, [pathname]);
 
   const boxes = [
     {
