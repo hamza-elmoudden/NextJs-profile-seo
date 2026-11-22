@@ -86,6 +86,17 @@ export async function getPosts(): Promise<Post[]> {
   return sanityClient.fetch<Post[]>(GET_POSTS, {}, POSTS_FETCH_OPTIONS);
 }
 
+// Pinned/featured posts first, then the original (publishedAt desc) order.
+export function postsToCards(posts: Post[], pinnedSlugs: string[] = []): BlogPost[] {
+  return [...posts]
+    .sort(
+      (a, b) =>
+        Number(pinnedSlugs.includes(b.slug) || b.featured) -
+        Number(pinnedSlugs.includes(a.slug) || a.featured),
+    )
+    .map((p) => postToCard(p, pinnedSlugs));
+}
+
 export function postToCard(post: Post, pinnedSlugs: string[] = []): BlogPost {
   const categorySlug = post.category?.slug ?? "";
   const tagSlugs = (post.tags ?? [])
