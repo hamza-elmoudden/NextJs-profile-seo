@@ -1,15 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import PortableBody from "@/components/portable-body";
-import type { PostFull } from "@/lib/posts";
+import JsonLd from "@/components/json-ld";
+import type { PostFull, RelatedPost } from "@/lib/posts";
 import {
-  SITE_NAME,
+  AUTHOR_NAME,
   absoluteUrl,
   breadcrumbSchema,
   buildMetadata,
   graph,
-  jsonLdString,
-  parseJsonLd,
   personRef,
 } from "@/lib/seo";
 
@@ -32,6 +31,26 @@ function postPath(post: PostFull): string {
   return `/blog/${post.category?.slug ?? "post"}/${post.slug}`;
 }
 
+/**
+ * Up to 3 related posts: hand-picked ones first, then same-category posts,
+ * then the newest posts if the category has fewer than 2 others.
+ */
+function relatedPosts(post: PostFull): (RelatedPost & { slug: string })[] {
+  const seen = new Set<string>();
+  const out: (RelatedPost & { slug: string })[] = [];
+  const add = (list: RelatedPost[] | null) => {
+    for (const p of list ?? []) {
+      if (out.length >= 3 || !p.slug || seen.has(p._id) || p._id === post._id) continue;
+      seen.add(p._id);
+      out.push(p as RelatedPost & { slug: string });
+    }
+  };
+  add(post.relatedPosts);
+  add(post.sameCategoryPosts);
+  if (out.length < 2) add(post.latestPosts);
+  return out;
+}
+
 function postKeywords(post: PostFull): string[] {
   return [
     ...(post.category ? [post.category.title] : []),
@@ -43,6 +62,7 @@ export function postMetadata(post: PostFull | null): Metadata {
   if (!post) return { title: "Post not found", robots: { index: false } };
 
   const keywords = postKeywords(post);
+  const ogImage = post.seo?.ogImage?.asset?.url ? post.seo.ogImage : post.coverImage;
   return buildMetadata({
     title: post.seo?.metaTitle ?? post.title,
     description: post.seo?.metaDescription ?? post.excerpt,
@@ -50,14 +70,13 @@ export function postMetadata(post: PostFull | null): Metadata {
     noIndex: post.seo?.noIndex,
     ogTitle: post.seo?.ogTitle,
     ogDescription: post.seo?.ogDescription,
-    image: post.seo?.ogImage?.asset?.url ?? post.coverImage?.asset?.url,
-    imageAlt: post.coverImage?.alt ?? post.title,
+    image: ogImage?.asset?.url,
+    imageAlt: ogImage?.alt?.trim() || post.title,
     twitterCard: post.seo?.twitterCard,
-    keywords,
     article: {
       publishedTime: post.publishedAt,
       modifiedTime: post.updatedAt ?? post.publishedAt,
-      authors: [post.author?.name ?? SITE_NAME],
+      authors: [AUTHOR_NAME],
       section: post.category?.title,
       tags: keywords,
     },
@@ -69,52 +88,45 @@ export default function BlogPostPage({ post }: { post: PostFull }) {
   const updated = formatDate(post.updatedAt);
   const readTime = estimateReadTime(post);
   const taxonomy = [...(post.category ? [post.category] : []), ...(post.tags ?? [])];
-  const related = (post.relatedPosts ?? []).filter((p): p is typeof p & { slug: string } =>
-    Boolean(p.slug),
-  );
+  const related = relatedPosts(post);
   const coverUrl = post.coverImage?.asset?.url;
 
-  const postUrl = absoluteUrl(postPath(post));
-  const isSiteOwner = !post.author || post.author.name === SITE_NAME;
-  const author = isSiteOwner
-    ? personRef
-    : { "@type": "Person", name: post.author!.name };
-  const jsonLdScript =
-    parseJsonLd(post.jsonLd) ??
-    jsonLdString(
-      graph(
-        {
-          "@type": "BlogPosting",
-          "@id": `${postUrl}#article`,
-          url: postUrl,
-          mainEntityOfPage: { "@type": "WebPage", "@id": postUrl },
-          headline: post.title,
-          description: post.seo?.metaDescription ?? post.excerpt ?? undefined,
-          datePublished: post.publishedAt ?? undefined,
-          dateModified: post.updatedAt ?? post.publishedAt ?? undefined,
-          image: coverUrl,
-          author,
-          publisher: personRef,
-          isPartOf: { "@id": `${absoluteUrl("/blog")}#blog` },
-          articleSection: post.category?.title,
-          keywords: postKeywords(post).join(", ") || undefined,
-          timeRequired: `PT${readTime}M`,
-          inLanguage: "en",
-        },
-        breadcrumbSchema([
-          { name: "Home", path: "/" },
-          { name: "Blog", path: "/blog" },
-          ...(post.category?.slug
-            ? [{ name: post.category.title, path: `/blog/${post.category.slug}` }]
-            : []),
-          { name: post.title, path: postPath(post) },
-        ]),
-      ),
-    );
+  const path = postPath(post);
+  const postUrl = absoluteUrl(path);
+  // Generated from the post's Sanity fields. The post.jsonLd text field is
+  // intentionally not used: existing values pointed at an old domain.
+  const jsonLd = graph(
+    {
+      "@type": "BlogPosting",
+      "@id": `${postUrl}#article`,
+      url: postUrl,
+      mainEntityOfPage: { "@type": "WebPage", "@id": postUrl },
+      headline: post.title,
+      description: post.seo?.metaDescription ?? post.excerpt ?? undefined,
+      datePublished: post.publishedAt ?? undefined,
+      dateModified: post.updatedAt ?? post.publishedAt ?? undefined,
+      image: coverUrl,
+      author: personRef,
+      publisher: personRef,
+      isPartOf: { "@id": `${absoluteUrl("/blog")}#blog` },
+      articleSection: post.category?.title,
+      keywords: postKeywords(post).join(", ") || undefined,
+      timeRequired: `PT${readTime}M`,
+      inLanguage: "en",
+    },
+    breadcrumbSchema([
+      { name: "Home", path: "/" },
+      { name: "Blog", path: "/blog" },
+      ...(post.category?.slug
+        ? [{ name: post.category.title, path: `/blog/${post.category.slug}` }]
+        : []),
+      { name: post.title, path },
+    ]),
+      );
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript }} />
+      <JsonLd data={jsonLd} />
 
       {/* ── POST HERO (split) ─────────────────────── */}
       <section className="relative overflow-hidden border-b border-edge py-[72px]">
@@ -147,28 +159,27 @@ export default function BlogPostPage({ post }: { post: PostFull }) {
                 {post.excerpt}
               </p>
             ) : null}
-            {post.author ? (
-              <div className="hero-reveal reveal-d3 mt-8 flex items-center gap-3">
-                {post.author.image?.asset?.url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={post.author.image.asset.url}
-                    alt={post.author.image.alt ?? post.author.name}
-                    className="h-10 w-10 rounded-full border border-edge object-cover"
-                  />
-                ) : (
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full border border-edge bg-card font-mono text-xs text-terminal">
-                    {post.author.name.slice(0, 2).toUpperCase()}
-                  </span>
-                )}
-                <div>
-                  <p className="font-mono text-[13px] text-cream">{post.author.name}</p>
-                  {post.author.role ? (
-                    <p className="font-mono text-[11px] text-terminal">{post.author.role}</p>
-                  ) : null}
-                </div>
+            {/* Byline name always comes from AUTHOR_NAME; image/role from the Sanity author doc. */}
+            <div className="hero-reveal reveal-d3 mt-8 flex items-center gap-3">
+              {post.author?.image?.asset?.url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={post.author.image.asset.url}
+                  alt={post.author.image.alt ?? AUTHOR_NAME}
+                  className="h-10 w-10 rounded-full border border-edge object-cover"
+                />
+              ) : (
+                <span className="flex h-10 w-10 items-center justify-center rounded-full border border-edge bg-card font-mono text-xs text-terminal">
+                  {AUTHOR_NAME.split(" ").map((w) => w[0]).join("").toUpperCase()}
+                </span>
+              )}
+              <div>
+                <p className="font-mono text-[13px] text-cream">{AUTHOR_NAME}</p>
+                {post.author?.role ? (
+                  <p className="font-mono text-[11px] text-terminal">{post.author.role}</p>
+                ) : null}
               </div>
-            ) : null}
+            </div>
             <div className="hero-reveal reveal-d3 mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 font-mono text-[12px] text-muted">
               <span className="text-terminal">● published</span>
               <span>·</span>
@@ -194,7 +205,7 @@ export default function BlogPostPage({ post }: { post: PostFull }) {
       <section className="border-b border-edge py-[64px]">
         <div className="container-x grid grid-cols-1 gap-12 lg:grid-cols-[1fr_300px]">
           <article className="max-w-[720px]">
-            <PortableBody body={post.body} />
+            <PortableBody body={post.body} fallbackAlt={post.title} />
             {updated ? (
               <p className="mt-10 border-t border-edge pt-5 font-mono text-[11px] text-muted">
                 last updated: <span className="text-terminal">{updated}</span>
@@ -259,7 +270,7 @@ export default function BlogPostPage({ post }: { post: PostFull }) {
             <p className="font-mono text-[11px] text-muted">
               share →{" "}
               <a
-                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(post.title)}`}
+                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(post.title)}&url=${encodeURIComponent(postUrl)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="transition-colors hover:text-amber"
@@ -268,9 +279,7 @@ export default function BlogPostPage({ post }: { post: PostFull }) {
               </a>
               {" / "}
               <a
-                href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
-                  `https://hamza.dev/blog/${post.category?.slug ?? "post"}/${post.slug}`,
-                )}`}
+                href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(postUrl)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="transition-colors hover:text-amber"
@@ -282,24 +291,44 @@ export default function BlogPostPage({ post }: { post: PostFull }) {
         </div>
       </section>
 
-      {/* ── UP NEXT ─────────────────────────────── */}
+      {/* ── RELATED POSTS ───────────────────────── */}
       {related.length > 0 ? (
-        <section className="border-b border-edge py-[48px]">
+        <section className="border-b border-edge bg-base py-[72px]">
           <div className="container-x">
-            <Link
-              href={`/blog/${related[0].category?.slug ?? "post"}/${related[0].slug}`}
-              className="card group flex items-center justify-between gap-6 px-6 py-5 transition-colors duration-150 hover:border-amber"
-            >
-              <div>
-                <p className="mb-1.5 font-mono text-[11px] tracking-wide text-terminal">UP NEXT</p>
-                <p className="font-display text-[clamp(17px,2vw,22px)] font-semibold text-cream transition-colors group-hover:text-amber-gold">
-                  {related[0].title}
-                </p>
-              </div>
-              <span className="font-display text-[28px] text-amber transition-transform duration-150 group-hover:translate-x-1.5">
-                →
-              </span>
-            </Link>
+            <p className="section-label">cat related.posts</p>
+            <h2 className="mt-3 font-display text-[clamp(22px,2.4vw,28px)] font-bold text-cream">
+              Related posts
+            </h2>
+            <div className="mt-8 grid grid-cols-1 gap-5 min-[560px]:grid-cols-2 xl:grid-cols-3">
+              {related.map((p) => (
+                <Link
+                  key={p._id}
+                  href={`/blog/${p.category?.slug ?? "post"}/${p.slug}`}
+                  className="card group flex flex-col p-[22px] transition-colors duration-150 hover:border-amber"
+                >
+                  <div className="mb-3 flex flex-wrap items-center gap-3 font-mono text-[11px] text-muted">
+                    {p.category ? (
+                      <span className="rounded-[4px] border border-edge px-2 py-0.5 text-terminal">
+                        {p.category.title}
+                      </span>
+                    ) : null}
+                    {formatDate(p.publishedAt) ? <span>{formatDate(p.publishedAt)}</span> : null}
+                  </div>
+                  <h3 className="mb-3 font-display text-[17px] font-semibold leading-snug text-cream transition-colors group-hover:text-amber-gold">
+                    {p.title}
+                  </h3>
+                  {p.excerpt ? (
+                    <p className="flex-1 text-sm leading-[1.6] text-muted">
+                      {p.excerpt.slice(0, 140)}
+                      {p.excerpt.length > 140 ? "…" : ""}
+                    </p>
+                  ) : null}
+                  <span className="mt-4 inline-flex items-center gap-1.5 font-mono text-xs text-amber transition-[gap] duration-150 group-hover:gap-2.5">
+                    read post →
+                  </span>
+                </Link>
+              ))}
+            </div>
           </div>
         </section>
       ) : null}

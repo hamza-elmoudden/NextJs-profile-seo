@@ -130,7 +130,7 @@ export default function GlobalTerminal({ settings }: { settings: SiteSettings | 
                 { kind: "out", text: service.title, tone: "cream" },
                 { kind: "out", text: RULE, tone: "dim" },
                 { kind: "out", text: "" },
-                { kind: "body", node: <PortableBody body={service.description} /> },
+                { kind: "body", node: <PortableBody body={service.description} fallbackAlt={service.title} /> },
               ]);
             } else {
               append([{ kind: "out", text: "No detailed description for this service.", tone: "dim" }]);
