@@ -78,13 +78,16 @@ export default async function Hero() {
             <span className="h-1.75 w-1.75 rounded-full bg-terminal shadow-[0_0_8px_var(--color-terminal)]" />
             available for freelance
           </div>
-          <p
-            data-hero-whoami
-            className="mb-5 font-mono text-[13px] text-terminal"
-          >
-            <span className="text-amber">~/hamza $</span> whoami --verbose
-          </p>
-          <h1 className="mb-[22px] font-display text-[clamp(38px,4.6vw,60px)] font-bold leading-[1.08] tracking-tight">
+          <div data-hero-whoami className="mb-5">
+            <p className="font-mono text-[13px] text-terminal">
+              <span className="text-amber">~/hamza $</span> whoami --verbose
+            </p>
+            {/* whoami output: the page's only H1 carries name + role */}
+            <h1 className="mt-1.5 font-mono text-[13px] font-normal text-cream">
+              Hamza Elmouddane — Backend Developer in Morocco
+            </h1>
+          </div>
+          <p className="mb-[22px] font-display text-[clamp(38px,4.6vw,60px)] font-bold leading-[1.08] tracking-tight">
             <span className="block overflow-hidden">
               <span data-hero-line className="block will-change-transform">
                 I BUILD{" "}
@@ -103,7 +106,7 @@ export default async function Hero() {
                 <ShinyText text="THE INVISIBLE." color="#FF6B00" speed={2} />
               </span>
             </span>
-          </h1>
+          </p>
           <p
             data-hero-desc
             className="mb-8.5 max-w-130 text-[17px] text-muted"

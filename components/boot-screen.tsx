@@ -49,8 +49,13 @@ export default function BootScreen() {
 
   if (gone) return null;
 
+  // Pure overlay: page content is server-rendered underneath it (never
+  // display:none). aria-hidden + data-nosnippet keep the loader text out of
+  // screen readers and search snippets.
   return (
     <div
+      aria-hidden
+      data-nosnippet
       className={`fixed inset-0 z-[999] bg-ink transition-opacity duration-500 ${
         fading ? "pointer-events-none opacity-0" : "opacity-100"
       }`}

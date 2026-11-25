@@ -1,9 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 // Legacy blog filter URLs (/blog?category=x) moved to real category pages
-// (/blog/x). Redirect here rather than in the page: app/loading.tsx makes the
-// page stream, so a redirect from render would be a 200 + meta refresh instead
-// of a real 308, and next.config redirects would carry ?category= along.
+// (/blog/x). Redirect here rather than in the page: /blog is ISR-cached (the
+// page can't see searchParams per request), and next.config redirects would
+// carry ?category= along.
 export function proxy(request: NextRequest) {
   const category = request.nextUrl.searchParams.get("category");
   if (!category || category === "all") return NextResponse.next();
