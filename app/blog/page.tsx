@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import JsonLd from "@/components/json-ld";
 import Link from "next/link";
 import BlogPosts from "@/components/blog-posts";
 import ContactStrip from "@/components/contact-strip";
@@ -16,12 +17,11 @@ import {
   breadcrumbSchema,
   buildMetadata,
   graph,
-  jsonLdString,
-  parseJsonLd,
   personRef,
 } from "@/lib/seo";
 
-export const dynamic = "force-dynamic";
+// ISR (matches the posts fetch revalidate) instead of rendering per request.
+export const revalidate = 60;
 
 export async function generateMetadata(): Promise<Metadata> {
   const postsPage = await getPostsPage();
@@ -36,13 +36,6 @@ export async function generateMetadata(): Promise<Metadata> {
     ogDescription: postsPage?.ogDescription,
     image: postsPage?.ogImage?.asset.url,
     twitterCard: postsPage?.twitterCard ?? undefined,
-    keywords: [
-      "Backend Engineering Blog",
-      "NestJS Tutorials",
-      "FastAPI Tutorials",
-      "System Design Articles",
-      "AI Engineering Blog",
-    ],
   });
 }
 
@@ -184,10 +177,8 @@ export default async function Blog() {
   const newsletterSubtext = postsPage?.newsletterCtaSubtext ?? "No spam. Unsubscribe any time.";
 
   const blogUrl = absoluteUrl("/blog");
-  const jsonLdScript =
-    parseJsonLd(postsPage?.jsonLd) ??
-    jsonLdString(
-      graph(
+  // Generated; the postsPage.jsonLd text field in Sanity is not used (stale domain).
+  const jsonLd = graph(
         {
           "@type": "Blog",
           "@id": `${blogUrl}#blog`,
@@ -213,12 +204,11 @@ export default async function Blog() {
           { name: "Home", path: "/" },
           { name: "Blog", path: "/blog" },
         ]),
-      ),
-    );
+      );
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript }} />
+      <JsonLd data={jsonLd} />
       {/* ── BLOG HERO ─────────────────────────────── */}
       <section className="relative overflow-hidden border-b border-edge py-[72px]">
         <div className="bg-grid-faint pointer-events-none absolute inset-0" aria-hidden />

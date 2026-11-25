@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import JsonLd from "@/components/json-ld";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import BlogPosts from "@/components/blog-posts";
@@ -17,7 +18,6 @@ import {
   breadcrumbSchema,
   buildMetadata,
   graph,
-  jsonLdString,
   personRef,
 } from "@/lib/seo";
 
@@ -49,7 +49,6 @@ export async function generateMetadata({
       `Articles on ${category.title} by Hamza Elmouddane: practical backend engineering, architecture, and lessons from production.`,
     path: `/blog/${category.slug}`,
     image: category.image?.asset?.url,
-    keywords: [category.title, `${category.title} Tutorials`, `${category.title} Articles`],
     // An empty category is a thin page; keep it out of the index until it has posts.
     noIndex: category.postCount === 0,
   });
@@ -107,10 +106,7 @@ export default async function BlogCategoryPage({
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: jsonLdString(jsonLd) }}
-      />
+<JsonLd data={jsonLd} />
 
       {/* ── CATEGORY HERO ─────────────────────────── */}
       <section className="relative overflow-hidden border-b border-edge py-[72px]">
