@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import JsonLd from "@/components/json-ld";
 import ContactStrip from "@/components/contact-strip";
 import PortableBody from "@/components/portable-body";
 import ShinyText from "@/components/shiny-text";
@@ -11,8 +12,6 @@ import {
   breadcrumbSchema,
   buildMetadata,
   graph,
-  jsonLdString,
-  parseJsonLd,
   personRef,
 } from "@/lib/seo";
 
@@ -35,12 +34,6 @@ export async function generateMetadata(): Promise<Metadata> {
     ogDescription: seo?.ogDescription,
     image: seo?.ogImage?.asset?.url ?? about?.profileImage?.asset?.url,
     imageAlt: SITE_NAME,
-    keywords: [
-      "About Hamza Elmouddane",
-      "Backend Engineer Resume",
-      "Self-taught Software Engineer",
-      "Remote Software Engineer",
-    ],
   });
 }
 
@@ -181,10 +174,8 @@ export default async function About() {
   const biography = about?.biography?.length ? about.biography : null;
   const location = about?.location ?? "Morocco";
 
-  const jsonLdScript =
-    parseJsonLd(about?.jsonLd) ??
-    jsonLdString(
-      graph(
+  // Generated; the aboutPage.jsonLd text field in Sanity is not used (stale domain).
+  const jsonLd = graph(
         {
           "@type": "ProfilePage",
           "@id": `${absoluteUrl("/about")}#profilepage`,
@@ -200,12 +191,11 @@ export default async function About() {
           { name: "Home", path: "/" },
           { name: "About", path: "/about" },
         ]),
-      ),
-    );
+      );
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript }} />
+      <JsonLd data={jsonLd} />
       {/* ── ABOUT HERO ─────────────────────────────── */}
       <section className="relative overflow-hidden border-b border-edge py-[60px] min-[560px]:py-[72px] min-[860px]:py-[80px]">
         <div className="bg-grid-faint pointer-events-none absolute inset-0" aria-hidden />
@@ -331,7 +321,7 @@ export default async function About() {
             <h2 className="section-heading hero-reveal reveal-d1">The Long Version</h2>
             {biography ? (
               <div className="hero-reveal reveal-d2 [&_p]:text-[15px] [&_p]:leading-[1.8]">
-                <PortableBody body={biography} />
+                <PortableBody body={biography} fallbackAlt={SITE_NAME} />
               </div>
             ) : (
             <div className="hero-reveal reveal-d2 space-y-5 text-[15px] leading-[1.8] text-muted">
