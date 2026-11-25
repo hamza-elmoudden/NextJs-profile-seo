@@ -6,25 +6,22 @@ import SectionHeader from "@/components/section-header";
 import ServicesSlider from "@/components/services-slider";
 import Link from "next/link";
 import { POSTS, PROJECTS, SERVICES, SKILLS } from "@/lib/content";
-import { getHomePage } from "@/lib/home-page";
 import { getFeaturedPosts } from "@/lib/posts";
 import { getFeaturedProjects, projectToCard } from "@/lib/projects";
 import { getServices } from "@/lib/services";
 import { Metadata } from "next";
 import { getSiteSettings } from "@/lib/site-settings";
+import { getAboutPage } from "@/lib/about-page";
+import JsonLd from "@/components/json-ld";
 import {
   SITE_DESCRIPTION,
   SITE_TITLE,
-  SITE_URL,
-  WEBSITE_ID,
   buildMetadata,
   graph,
-  jsonLdString,
-  parseJsonLd,
-  personRef,
+  personSchema,
+  profilePageSchema,
+  websiteSchema,
 } from "@/lib/seo";
-
-
 
 export async function generateMetadata(): Promise<Metadata> {
   let settings: Awaited<ReturnType<typeof getSiteSettings>> = null;
@@ -41,7 +38,6 @@ export async function generateMetadata(): Promise<Metadata> {
       description: settings?.siteDescription ?? SITE_DESCRIPTION,
       path: "/",
       image: settings?.defaultOgImage?.asset.url,
-      keywords: ["Software Engineer Portfolio", "Backend Engineer Portfolio", "Hire Backend Developer"],
     }),
     // Home shows the bare site title, not "<title> — Hamza Elmouddane".
     title: { absolute: title },
@@ -67,29 +63,28 @@ export default async function Home() {
   } catch {
     featuredProjects = [];
   }
-  let homePage: Awaited<ReturnType<typeof getHomePage>> = null;
+  let settings: Awaited<ReturnType<typeof getSiteSettings>> = null;
+  let about: Awaited<ReturnType<typeof getAboutPage>> = null;
   try {
-    homePage = await getHomePage();
+    [settings, about] = await Promise.all([getSiteSettings(), getAboutPage()]);
   } catch {
-    homePage = null;
+    // structured data falls back to constants
   }
   const services = sanityServices.length > 0 ? sanityServices : null;
 
-  const jsonLdScript =
-    parseJsonLd(homePage?.jsonLd) ??
-    jsonLdString(
-      graph({
-        "@type": "ProfilePage",
-        "@id": `${SITE_URL}/#profilepage`,
-        url: SITE_URL,
-        name: SITE_TITLE,
-        description: SITE_DESCRIPTION,
-        isPartOf: { "@id": WEBSITE_ID },
-        mainEntity: personRef,
-        about: personRef,
-        inLanguage: "en",
-      }),
-    );
+  // Generated from constants + Sanity data. The homePage.jsonLd text field in
+  // Sanity is intentionally not used: it held stale URLs from an old domain.
+  const jsonLd = graph(
+    personSchema({
+      image: about?.profileImage?.asset?.url ?? settings?.logo?.asset?.url ?? null,
+      email: settings?.email ?? null,
+    }),
+    websiteSchema(),
+    profilePageSchema({
+      name: settings?.siteTitle ?? SITE_TITLE,
+      description: settings?.siteDescription ?? SITE_DESCRIPTION,
+    }),
+  );
   const blogPosts =
     featuredPosts.length > 0
       ? featuredPosts.map((post) => ({
@@ -119,7 +114,7 @@ export default async function Home() {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript }} />
+      <JsonLd data={jsonLd} />
       <Hero />
 
       {/* ── SERVICES ─────────────────────────────── */}
@@ -395,7 +390,7 @@ export default async function Home() {
                 </div>
               </article>
               <p className="mt-6 font-mono text-xs text-muted">
-                # featured: {projects.length} · src: github.com/elmouddane
+                # featured: {projects.length} · src: github.com/hamza-elmoudden
               </p>
             </Reveal>
           ) : null}
