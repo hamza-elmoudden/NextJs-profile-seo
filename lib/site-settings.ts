@@ -52,7 +52,7 @@ export const GET_SITE_SETTINGS = `*[_type == "siteSettings"][0] {
   },
   defaultOgImage {
     asset-> { url },
-    "alt": null
+    alt
   },
   email,
   phone,

@@ -13,6 +13,8 @@ export type Service = {
 
 export type ServiceFull = Service & {
   description: unknown[] | null;
+  /** From an optional `relatedProjects` reference field (not in the Studio schema yet). */
+  relatedProjectSlugs: string[] | null;
   seo: {
     metaTitle?: string;
     metaDescription?: string;
@@ -56,7 +58,8 @@ export const GET_SERVICE_BY_SLUG = `
     icon,
     featured,
     order,
-    seo
+    seo{..., ogImage{asset->{url}, alt}},
+    "relatedProjectSlugs": relatedProjects[]->slug.current
   }
 `;
 
@@ -72,4 +75,28 @@ export const GET_ALL_SERVICE_SLUGS = `
 
 export async function getAllServiceSlugs(): Promise<{ slug: string }[]> {
   return sanityClient.fetch<{ slug: string }[]>(GET_ALL_SERVICE_SLUGS, {}, SERVICES_FETCH_OPTIONS);
+}
+
+/**
+ * Service → project links used until the Studio `service` schema gets a
+ * `relatedProjects` reference array (which takes precedence when set).
+ */
+const SERVICE_RELATED_PROJECTS: Record<string, string[]> = {
+  "backend-api-development": [
+    "fastnest-modular-python-framework-for-fastapi",
+    "pilotiq-linkedin-post-version-2",
+    "safa-ai-powered-skincare-assistant",
+  ],
+  "ai-agent-and-chatbot-development": [
+    "safa-ai-powered-skincare-assistant",
+    "pilotiq-linkedin-post-version-2",
+  ],
+  "full-stack-applications": ["safa-ai-powered-skincare-assistant", "store-nexus"],
+  "website-development": ["store-nexus"],
+  "database-design": ["safa-ai-powered-skincare-assistant"],
+};
+
+export function relatedProjectSlugs(service: ServiceFull): string[] {
+  const fromSanity = (service.relatedProjectSlugs ?? []).filter(Boolean);
+  return fromSanity.length > 0 ? fromSanity : (SERVICE_RELATED_PROJECTS[service.slug] ?? []);
 }

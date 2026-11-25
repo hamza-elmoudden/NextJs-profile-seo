@@ -16,13 +16,6 @@ export async function generateMetadata(): Promise<Metadata> {
     description:
       "Backend development, AI engineering, and infrastructure services by Hamza Elmouddane — APIs, LLM pipelines, and production systems built to scale.",
     path: "/services",
-    keywords: [
-      "Backend Development Services",
-      "AI Engineering Services",
-      "API Development",
-      "LLM Integration Services",
-      "Freelance Backend Development",
-    ],
   });
 }
 

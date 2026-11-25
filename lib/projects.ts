@@ -98,6 +98,14 @@ export async function getFeaturedProjects(): Promise<SanityProject[]> {
   );
 }
 
+export async function getProjectsBySlugs(slugs: string[]): Promise<SanityProject[]> {
+  if (slugs.length === 0) return [];
+  const projects = await getProjects();
+  return slugs
+    .map((slug) => projects.find((p) => p.slug === slug))
+    .filter((p): p is SanityProject => Boolean(p));
+}
+
 export const GET_PROJECT_BY_SLUG = `
   *[_type == "project" && slug.current == $slug][0] {
     _id,
@@ -116,7 +124,7 @@ export const GET_PROJECT_BY_SLUG = `
     description,
     jsonLd,
     gallery[]{${IMAGE_FRAGMENT}},
-    seo
+    seo{..., ogImage{asset->{url}, alt}}
   }
 `;
 

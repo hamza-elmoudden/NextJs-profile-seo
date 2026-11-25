@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-// Single source of truth for site identity, keywords, and structured data.
+// Single source of truth for site identity, URLs, and structured data.
 // Next merges metadata *shallowly*: a page that sets `openGraph` or `twitter`
 // replaces the layout's object wholesale. `buildMetadata` re-applies the site
 // defaults (siteName, locale, url, fallback image) so every page keeps them.
@@ -14,10 +14,17 @@ export const SITE_DESCRIPTION =
   "clients worldwide. Available for remote, freelance, and contract work.";
 export const SITE_LOCALE = "en_US";
 
-export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(
-  /\/+$/,
-  "",
-);
+/**
+ * Canonical origin, no trailing slash. Every absolute URL (metadataBase,
+ * canonical, OG, sitemap, robots, JSON-LD, share links) is built from this.
+ * Falls back to Vercel's production domain, then localhost for dev.
+ */
+export const SITE_URL = (
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : "http://localhost:3000")
+).replace(/\/+$/, "");
 
 /** Turn a site-relative path into an absolute URL (absolute URLs pass through). */
 export function absoluteUrl(path = "/"): string {
@@ -28,71 +35,18 @@ export function absoluteUrl(path = "/"): string {
 export const PERSON_ID = `${SITE_URL}/#person`;
 export const WEBSITE_ID = `${SITE_URL}/#website`;
 
-export const PERSON_SKILLS = [
-  "Backend Development",
-  "AI Engineering",
-  "Large Language Models",
-  "Retrieval-Augmented Generation",
-  "System Design",
-  "Distributed Systems",
-  "Event-Driven Architecture",
-  "CQRS",
-  "Microservices",
-  "REST API Design",
-  "WebSockets",
-  "NestJS",
-  "FastAPI",
-  "Node.js",
-  "Go",
-  "Python",
-  "TypeScript",
-  "PostgreSQL",
-  "MongoDB",
-  "Redis",
-  "Docker",
-];
+/** The site has a single author; byline, meta author and JSON-LD all use this. */
+export const AUTHOR_NAME = SITE_NAME;
+export const PERSON_JOB_TITLE = "Backend Developer";
+export const PERSON_COUNTRY = "Morocco";
 
-/** Site-wide keywords; pages append their own via `buildMetadata({ keywords })`. */
-export const SITE_KEYWORDS = [
-  "Hamza Elmouddane",
-  "Backend Engineer",
-  "AI Engineer",
-  "Remote Backend Engineer",
-  "Remote AI Engineer",
-  "Freelance Backend Developer",
-  "Freelance AI Engineer",
-  "Contract Backend Developer",
-  "Hire Remote Backend Developer",
-  "Hire AI Engineer",
-  "NestJS Developer",
-  "FastAPI Developer",
-  "Go Developer",
-  "TypeScript Developer",
-  "Node.js Developer",
-  "Python Backend Developer",
-  "LLM Engineer",
-  "AI Integration",
-  "RAG",
-  "System Design",
-  "Scalable APIs",
-  "Microservices",
-  "Event-Driven Architecture",
-  "CQRS",
-];
+export const PERSON_SKILLS = ["NestJS", "Go", "Python", "FastAPI", "TypeScript", "AI agents"];
 
-function uniqueKeywords(...lists: (readonly (string | null | undefined)[] | undefined)[]): string[] {
-  const seen = new Set<string>();
-  const out: string[] = [];
-  for (const list of lists) {
-    for (const k of list ?? []) {
-      const v = k?.trim();
-      if (!v || seen.has(v.toLowerCase())) continue;
-      seen.add(v.toLowerCase());
-      out.push(v);
-    }
-  }
-  return out;
-}
+export const PERSON_SAME_AS = [
+  "https://www.linkedin.com/in/hamza-elmouddane-08a140296/",
+  "https://github.com/hamza-elmoudden",
+  "https://www.instagram.com/hamza_elmouddane",
+];
 
 /**
  * Page title that cooperates with the root `%s — Hamza Elmouddane` template.
@@ -117,7 +71,6 @@ type BuildMetadataInput = {
   description?: string | null;
   /** Site-relative path or absolute URL; used for canonical and og:url. */
   path: string;
-  keywords?: readonly (string | null | undefined)[];
   image?: string | null;
   imageAlt?: string | null;
   ogTitle?: string | null;
@@ -141,6 +94,7 @@ export function buildMetadata(input: BuildMetadataInput): Metadata {
   const ogDescription = input.ogDescription ?? description;
   const image = input.image ?? input.defaultImage ?? undefined;
   const images = image ? [{ url: image, alt: input.imageAlt ?? ogTitle }] : undefined;
+  // Sanity canonicalUrl values may lack a leading slash; always emit absolute URLs.
   const url = absoluteUrl(input.path);
 
   const base = {
@@ -155,9 +109,8 @@ export function buildMetadata(input: BuildMetadataInput): Metadata {
   return {
     title: pageTitle(input.title),
     description,
-    keywords: uniqueKeywords(input.keywords, SITE_KEYWORDS),
     // English content for a worldwide audience: no country variant, x-default = same URL.
-    alternates: { canonical: input.path, languages: { en: input.path, "x-default": input.path } },
+    alternates: { canonical: url, languages: { en: url, "x-default": url } },
     // Always set robots: a page's `robots` replaces the layout's, even when undefined.
     robots: input.noIndex
       ? { index: false, follow: false }
@@ -188,37 +141,35 @@ export function buildMetadata(input: BuildMetadataInput): Metadata {
 
 // ── Structured data ─────────────────────────────────────────────────────────
 
-/** Serialize JSON-LD for inline <script>; escapes `<` so content can't close the tag. */
-export function jsonLdString(data: unknown): string {
-  return JSON.stringify(data).replace(/</g, "\\u003c");
-}
+export const PROFILE_PAGE_ID = `${SITE_URL}/#profilepage`;
 
-/** Validate a Sanity-provided JSON-LD string; returns it re-serialized or null. */
-export function parseJsonLd(raw: string | null | undefined): string | null {
-  if (!raw) return null;
-  try {
-    return jsonLdString(JSON.parse(raw));
-  } catch {
-    return null;
-  }
-}
+/**
+ * Reference to the site Person. The full Person node lives on the home page;
+ * other pages carry this self-contained stub (type + name + url) so each
+ * page's graph validates on its own.
+ */
+export const personRef = {
+  "@type": "Person",
+  "@id": PERSON_ID,
+  name: AUTHOR_NAME,
+  url: SITE_URL,
+} as const;
 
-/** Reference to the site-wide Person entity declared in the root layout. */
-export const personRef = { "@id": PERSON_ID } as const;
-
-export function personSchema(opts: { sameAs?: string[]; image?: string | null; email?: string | null }) {
+export function personSchema(opts: { image?: string | null; email?: string | null }) {
   return {
     "@type": "Person",
     "@id": PERSON_ID,
     name: SITE_NAME,
     url: SITE_URL,
-    jobTitle: SITE_TAGLINE,
+    jobTitle: PERSON_JOB_TITLE,
     description: SITE_DESCRIPTION,
     image: opts.image ?? undefined,
     email: opts.email ? `mailto:${opts.email}` : undefined,
+    address: { "@type": "PostalAddress", addressCountry: PERSON_COUNTRY },
     knowsLanguage: "en",
     knowsAbout: PERSON_SKILLS,
-    sameAs: opts.sameAs?.length ? opts.sameAs : undefined,
+    sameAs: PERSON_SAME_AS,
+    mainEntityOfPage: { "@id": PROFILE_PAGE_ID },
   };
 }
 
@@ -227,12 +178,25 @@ export function websiteSchema() {
     "@type": "WebSite",
     "@id": WEBSITE_ID,
     url: SITE_URL,
-    name: SITE_TITLE,
-    alternateName: SITE_NAME,
+    name: SITE_NAME,
     description: SITE_DESCRIPTION,
     inLanguage: "en",
-    author: personRef,
-    publisher: personRef,
+    author: { "@id": PERSON_ID },
+    publisher: { "@id": PERSON_ID },
+  };
+}
+
+export function profilePageSchema(opts: { name: string; description: string }) {
+  return {
+    "@type": "ProfilePage",
+    "@id": PROFILE_PAGE_ID,
+    url: SITE_URL,
+    name: opts.name,
+    description: opts.description,
+    isPartOf: { "@id": WEBSITE_ID },
+    mainEntity: { "@id": PERSON_ID },
+    about: { "@id": PERSON_ID },
+    inLanguage: "en",
   };
 }
 

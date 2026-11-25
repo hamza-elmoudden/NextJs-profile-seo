@@ -1,4 +1,5 @@
 import { sanityClient } from "@/lib/sanity";
+import { SITE_URL } from "@/lib/seo";
 
 // The MetadataRoute.Sitemap API (app/sitemap.ts) only supports `images` as
 // plain URL strings, which emit bare <image:loc> entries. This route handler
@@ -144,12 +145,8 @@ ${entries}
 }
 
 export async function GET() {
-  // Strip any trailing slash: a base like "https://…/" would otherwise
-  // produce double-slash URLs ("//projects/…").
-  const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(
-    /\/+$/,
-    "",
-  );
+  // SITE_URL has no trailing slash, so `${baseUrl}/x` never doubles up.
+  const baseUrl = SITE_URL;
 
   const [posts, categories, projects, services] = await Promise.all([
     sanityClient.fetch<SitemapPost[]>(GET_SITEMAP_POSTS, {}, FETCH_OPTIONS("posts")),

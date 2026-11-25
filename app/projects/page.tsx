@@ -10,14 +10,14 @@ import { BLOG_POSTS, PROJECTS, type BlogPost, type Project } from "@/lib/content
 import { getFeaturedProjects, getProjects, projectToCard } from "@/lib/projects";
 import { getPosts, postToCard } from "@/lib/posts";
 
-export const dynamic = "force-dynamic";
+// ISR (matches the projects fetch revalidate) instead of rendering per request.
+export const revalidate = 60;
 
 export const metadata: Metadata = buildMetadata({
   title: "Projects",
   description:
     "Projects by Hamza Elmouddane: backend systems, SaaS products, AI applications, and open-source libraries built with NestJS, FastAPI, Go, React, and TypeScript.",
   path: "/projects",
-  keywords: ["Backend Projects", "NestJS Projects", "FastAPI Projects", "Open Source Projects", "Software Engineer Portfolio"],
 });
 
 const TYPE_BADGE: Record<string, string> = {

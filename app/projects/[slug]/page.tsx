@@ -4,15 +4,8 @@ import { notFound } from "next/navigation";
 import ContactStrip from "@/components/contact-strip";
 import PortableBody from "@/components/portable-body";
 import { getAllProjectSlugs, getProjectBySlug, getProjects } from "@/lib/projects";
-import {
-  absoluteUrl,
-  breadcrumbSchema,
-  buildMetadata,
-  graph,
-  jsonLdString,
-  parseJsonLd,
-  personRef,
-} from "@/lib/seo";
+import JsonLd from "@/components/json-ld";
+import { absoluteUrl, breadcrumbSchema, buildMetadata, graph, personRef } from "@/lib/seo";
 
 // ISR: statically generate all projects at build time, then revalidate each
 // page in the background at most every 60 seconds. dynamicParams (default
@@ -60,7 +53,7 @@ export async function generateMetadata({
   const project = await getProjectBySlug(slug);
   if (!project) return { title: "Project not found", robots: { index: false } };
 
-  const tech = (project.technologies ?? []).map((t) => t.name);
+  const ogImage = project.seo?.ogImage?.asset?.url ? project.seo.ogImage : project.featuredImage;
   return buildMetadata({
     title: project.seo?.metaTitle ?? project.title,
     description: project.seo?.metaDescription ?? project.shortDescription,
@@ -68,10 +61,9 @@ export async function generateMetadata({
     noIndex: project.seo?.noIndex,
     ogTitle: project.seo?.ogTitle,
     ogDescription: project.seo?.ogDescription,
-    image: project.seo?.ogImage?.asset?.url ?? project.featuredImage?.asset?.url,
-    imageAlt: project.featuredImage?.alt ?? project.title,
+    image: ogImage?.asset?.url,
+    imageAlt: ogImage?.alt?.trim() || project.title,
     twitterCard: project.seo?.twitterCard,
-    keywords: [project.title, ...tech, ...tech.map((t) => `${t} Project`)],
   });
 }
 
@@ -95,41 +87,39 @@ export default async function ProjectPage({
   const gallery = (project.gallery ?? []).filter((g) => g?.asset?.url);
 
   const projectUrl = absoluteUrl(`/projects/${slug}`);
-  const tech = (project.technologies ?? []).map((t) => t.name);
-  const jsonLdScript =
-    parseJsonLd(project.jsonLd) ??
-    jsonLdString(
-      graph(
-        {
-          "@type": project.githubUrl && !project.liveUrl ? "SoftwareSourceCode" : "CreativeWork",
-          "@id": `${projectUrl}#project`,
-          url: projectUrl,
-          mainEntityOfPage: projectUrl,
-          name: project.title,
-          headline: project.title,
-          description: project.seo?.metaDescription ?? project.shortDescription,
-          image: coverUrl,
-          author: personRef,
-          creator: personRef,
-          dateCreated: project.startDate ?? undefined,
-          dateModified: project.endDate ?? undefined,
-          keywords: tech.join(", ") || undefined,
-          codeRepository: project.githubUrl ?? undefined,
-          programmingLanguage: project.githubUrl && !project.liveUrl ? tech : undefined,
-          sameAs: [project.liveUrl, project.githubUrl].filter(Boolean),
-          inLanguage: "en",
-        },
-        breadcrumbSchema([
-          { name: "Home", path: "/" },
-          { name: "Projects", path: "/projects" },
-          { name: project.title, path: `/projects/${slug}` },
-        ]),
-      ),
-    );
+  const tech = [...new Set((project.technologies ?? []).map((t) => t.name))];
+  const projectTitle = project.title.trim();
+  // Generated from Sanity fields; the project.jsonLd text field is not used.
+  const jsonLd = graph(
+    {
+      "@type": project.githubUrl && !project.liveUrl ? "SoftwareSourceCode" : "CreativeWork",
+      "@id": `${projectUrl}#project`,
+      url: projectUrl,
+      mainEntityOfPage: projectUrl,
+      name: projectTitle,
+      headline: projectTitle,
+      description: project.seo?.metaDescription ?? project.shortDescription,
+      image: coverUrl,
+      author: personRef,
+      creator: personRef,
+      dateCreated: project.startDate ?? undefined,
+      dateModified: project.endDate ?? undefined,
+      keywords: tech.join(", ") || undefined,
+      codeRepository: project.githubUrl ?? undefined,
+      programmingLanguage: project.githubUrl && !project.liveUrl ? tech : undefined,
+      sameAs: [project.liveUrl, project.githubUrl].filter(Boolean),
+      inLanguage: "en",
+    },
+    breadcrumbSchema([
+      { name: "Home", path: "/" },
+      { name: "Projects", path: "/projects" },
+      { name: projectTitle, path: `/projects/${slug}` },
+    ]),
+  );
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript }} />
+      <JsonLd data={jsonLd} />
 
       {/* ── PROJECT HERO ──────────────────────────── */}
       <section className="relative overflow-hidden border-b border-edge py-[72px]">
@@ -191,7 +181,7 @@ export default async function ProjectPage({
         <div className="container-x grid grid-cols-1 gap-12 lg:grid-cols-[1fr_260px]">
           <article className="max-w-[720px]">
             <p className="section-label mb-8">cat {project.slug}.md</p>
-            <PortableBody body={project.description} />
+            <PortableBody body={project.description} fallbackAlt={project.title} />
           </article>
 
           {/* ── SIDE META ─────────────────────────── */}

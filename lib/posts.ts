@@ -150,6 +150,15 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
   );
 }
 
+export type RelatedPost = {
+  _id: string;
+  title: string;
+  slug: string | null;
+  excerpt: string | null;
+  publishedAt: string | null;
+  category: PostTaxonomy | null;
+};
+
 export type PostFull = Post & {
   updatedAt: string | null;
   body: unknown[] | null;
@@ -161,16 +170,9 @@ export type PostFull = Post & {
         socialLinks: { label?: string; url?: string }[] | null;
       })
     | null;
-  relatedPosts:
-    | {
-        _id: string;
-        title: string;
-        slug: string | null;
-        excerpt: string | null;
-        publishedAt: string | null;
-        category: PostTaxonomy | null;
-      }[]
-    | null;
+  relatedPosts: RelatedPost[] | null;
+  sameCategoryPosts: RelatedPost[] | null;
+  latestPosts: RelatedPost[] | null;
   seo: {
     metaTitle?: string;
     metaDescription?: string;
@@ -182,6 +184,17 @@ export type PostFull = Post & {
     twitterCard?: "summary_large_image" | "summary";
   } | null;
 };
+
+// sameCategoryPosts / latestPosts back the "Related posts" section when the
+// hand-picked relatedPosts list is short.
+const RELATED_POST_FIELDS = `
+  _id,
+  title,
+  "slug": slug.current,
+  excerpt,
+  publishedAt,
+  category->{title, "slug": slug.current}
+`;
 
 export const GET_POST_FULL_BY_SLUG = `
   *[_type == "post" && slug.current == $slug][0] {
@@ -198,22 +211,20 @@ export const GET_POST_FULL_BY_SLUG = `
     author->{
       name,
       "slug": slug.current,
-      image,
+      image{asset->{url}, alt},
       role,
       bio,
       socialLinks
     },
     category->{title, "slug": slug.current},
     tags[]->{title, "slug": slug.current},
-    relatedPosts[]->{
-      _id,
-      title,
-      "slug": slug.current,
-      excerpt,
-      publishedAt,
-      category->{title, "slug": slug.current}
-    },
-    seo
+    relatedPosts[]->{${RELATED_POST_FIELDS}},
+    "sameCategoryPosts": *[_type == "post" && _id != ^._id && defined(slug.current)
+      && defined(^.category._ref) && category._ref == ^.category._ref]
+      | order(publishedAt desc) [0...3] {${RELATED_POST_FIELDS}},
+    "latestPosts": *[_type == "post" && _id != ^._id && defined(slug.current)]
+      | order(publishedAt desc) [0...3] {${RELATED_POST_FIELDS}},
+    seo{..., ogImage{asset->{url}, alt}}
   }
 `;
 

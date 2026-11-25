@@ -9,18 +9,7 @@ import { getSiteSettings } from "@/lib/site-settings";
 import StoreProvider from "@/components/store-provider";
 import "./globals.css";
 import Script from "next/script";
-import {
-  SITE_DESCRIPTION,
-  SITE_KEYWORDS,
-  SITE_LOCALE,
-  SITE_NAME,
-  SITE_TITLE,
-  SITE_URL,
-  graph,
-  jsonLdString,
-  personSchema,
-  websiteSchema,
-} from "@/lib/seo";
+import { SITE_DESCRIPTION, SITE_LOCALE, SITE_NAME, SITE_TITLE, SITE_URL } from "@/lib/seo";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
@@ -57,11 +46,9 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description,
     applicationName: SITE_NAME,
-    keywords: SITE_KEYWORDS,
     authors: [{ name: SITE_NAME, url: SITE_URL }],
     creator: SITE_NAME,
     publisher: SITE_NAME,
-    category: "technology",
     formatDetection: { email: false, address: false, telephone: false },
     robots: {
       index: true,
@@ -81,7 +68,7 @@ export async function generateMetadata(): Promise<Metadata> {
       url: SITE_URL,
       title: settings?.siteTitle ?? SITE_TITLE,
       description,
-      images: ogImage ? [{ url: ogImage, alt: SITE_TITLE }] : undefined,
+      images: ogImage ? [{ url: ogImage, alt: settings?.defaultOgImage?.alt ?? SITE_TITLE }] : undefined,
     },
     twitter: {
       card: "summary_large_image",
@@ -97,18 +84,6 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const settings = await getSiteSettings();
-  const siteJsonLd = jsonLdString(
-    graph(
-      personSchema({
-        sameAs: (settings?.socialLinks ?? [])
-          .map((l) => l.url)
-          .filter((u): u is string => Boolean(u) && /^https?:\/\//.test(u)),
-        image: settings?.logo?.asset?.url ?? null,
-        email: settings?.email ?? null,
-      }),
-      websiteSchema(),
-    ),
-  );
 
   return (
     <html
@@ -133,7 +108,6 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       
       <body className="flex min-h-full flex-col">
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: siteJsonLd }} />
         <StoreProvider settings={settings}>
           <BootScreen />
           <ScrollToTop />

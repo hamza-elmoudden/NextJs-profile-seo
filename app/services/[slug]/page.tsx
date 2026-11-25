@@ -3,15 +3,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import ContactStrip from "@/components/contact-strip";
 import PortableBody from "@/components/portable-body";
-import { getAllServiceSlugs, getServiceBySlug, getServices } from "@/lib/services";
+import JsonLd from "@/components/json-ld";
 import {
-  absoluteUrl,
-  breadcrumbSchema,
-  buildMetadata,
-  graph,
-  jsonLdString,
-  personRef,
-} from "@/lib/seo";
+  getAllServiceSlugs,
+  getServiceBySlug,
+  getServices,
+  relatedProjectSlugs,
+} from "@/lib/services";
+import { getProjectsBySlugs } from "@/lib/projects";
+import { absoluteUrl, breadcrumbSchema, buildMetadata, graph, personRef } from "@/lib/seo";
 
 // ISR: revalidate service pages every 25 minutes; new slugs render on demand
 export const revalidate = 1500;
@@ -39,13 +39,8 @@ export async function generateMetadata({
     ogTitle: service.seo?.ogTitle,
     ogDescription: service.seo?.ogDescription,
     image: service.seo?.ogImage?.asset?.url,
+    imageAlt: service.seo?.ogImage?.alt?.trim() || service.title,
     twitterCard: service.seo?.twitterCard,
-    keywords: [
-      service.title,
-      `${service.title} Services`,
-      `Freelance ${service.title}`,
-      `Remote ${service.title}`,
-    ],
   });
 }
 
@@ -58,7 +53,10 @@ export default async function ServicePage({
   const service = await getServiceBySlug(slug);
   if (!service) notFound();
 
-  const allServices = await getServices();
+  const [allServices, relatedProjects] = await Promise.all([
+    getServices(),
+    getProjectsBySlugs(relatedProjectSlugs(service)),
+  ]);
   const others = allServices.filter((s) => s._id !== service._id).slice(0, 3);
 
   const serviceUrl = absoluteUrl(`/services/${slug}`);
@@ -71,7 +69,10 @@ export default async function ServicePage({
       serviceType: service.title,
       description: service.seo?.metaDescription ?? service.shortDescription,
       provider: personRef,
-      areaServed: "Worldwide",
+      areaServed: [
+        { "@type": "Country", name: "Morocco" },
+        { "@type": "Place", name: "Worldwide" },
+      ],
       availableChannel: {
         "@type": "ServiceChannel",
         serviceUrl: absoluteUrl("/contact"),
@@ -86,10 +87,7 @@ export default async function ServicePage({
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: jsonLdString(jsonLd) }}
-      />
+      <JsonLd data={jsonLd} />
 
       {/* ── SERVICE HERO ──────────────────────────── */}
       <section className="relative overflow-hidden border-b border-edge py-[72px]">
@@ -124,10 +122,54 @@ export default async function ServicePage({
         <div className="container-x">
           <article className="max-w-[720px]">
             <p className="section-label mb-8">cat {service.slug}.md</p>
-            <PortableBody body={service.description} />
+            <PortableBody body={service.description} fallbackAlt={service.title} />
           </article>
         </div>
       </section>
+
+      {/* ── RELATED PROJECTS ──────────────────────── */}
+      {relatedProjects.length > 0 ? (
+        <section className="border-b border-edge py-[72px]">
+          <div className="container-x">
+            <p className="section-label">ls ./projects --related</p>
+            <h2 className="mt-3 font-display text-[clamp(22px,2.4vw,28px)] font-bold text-cream">
+              Projects built with this service
+            </h2>
+            <div className="mt-8 grid grid-cols-1 gap-5 min-[560px]:grid-cols-2 xl:grid-cols-3">
+              {relatedProjects.map((p) => (
+                <Link
+                  key={p._id}
+                  href={`/projects/${p.slug}`}
+                  className="card group flex flex-col p-[22px] transition-colors duration-150 hover:border-amber"
+                >
+                  <h3 className="mb-3 font-display text-[16px] font-semibold text-cream transition-colors group-hover:text-amber-gold">
+                    {p.title.trim()}
+                  </h3>
+                  <p className="flex-1 text-sm leading-[1.6] text-muted">
+                    {p.shortDescription.slice(0, 120)}
+                    {p.shortDescription.length > 120 ? "…" : ""}
+                  </p>
+                  {p.technologies?.length ? (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {[...new Set(p.technologies.map((t) => t.name))].map((name) => (
+                        <span
+                          key={name}
+                          className="rounded-[4px] border border-edge bg-surface px-2.5 py-[3px] font-mono text-[11px] text-muted"
+                        >
+                          {name}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                  <span className="mt-4 inline-flex items-center gap-1.5 font-mono text-xs text-amber transition-[gap] duration-150 group-hover:gap-2.5">
+                    view project →
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       {/* ── OTHER SERVICES ────────────────────────── */}
       {others.length > 0 ? (
