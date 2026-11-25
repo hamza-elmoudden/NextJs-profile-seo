@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { WEBSITE_ID, absoluteUrl, breadcrumbSchema, buildMetadata, graph, jsonLdString, personRef } from "@/lib/seo";
+import JsonLd from "@/components/json-ld";
+import { WEBSITE_ID, absoluteUrl, breadcrumbSchema, buildMetadata, graph, personRef } from "@/lib/seo";
 import ContactForm from "@/components/contact-form";
 import ContactEmailLink from "@/components/contact-email-link";
 import ShinyText from "@/components/shiny-text";
@@ -9,11 +10,9 @@ export const metadata: Metadata = buildMetadata({
   description:
     "Contact Hamza Elmouddane to hire a Backend & AI Engineer for APIs, scalable web applications, AI/LLM pipelines, and SaaS products. Remote and freelance.",
   path: "/contact",
-  keywords: ["Hire Backend Developer", "Hire AI Engineer", "Freelance NestJS Developer", "Contact Hamza Elmouddane"],
 });
 
-const CONTACT_JSON_LD = jsonLdString(
-  graph(
+const CONTACT_JSON_LD = graph(
     {
       "@type": "ContactPage",
       "@id": `${absoluteUrl("/contact")}#contactpage`,
@@ -27,7 +26,6 @@ const CONTACT_JSON_LD = jsonLdString(
       { name: "Home", path: "/" },
       { name: "Contact", path: "/contact" },
     ]),
-  ),
 );
 
 const WHAT_TO_SEND = [
@@ -45,7 +43,7 @@ const DETAILS_STRIP = [
 export default function Contact() {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: CONTACT_JSON_LD }} />
+      <JsonLd data={CONTACT_JSON_LD} />
       {/* ── PAGE HERO ─────────────────────────────── */}
       <section className="relative overflow-hidden border-b border-edge py-[64px] min-[860px]:py-[80px]">
         <div className="bg-grid-faint pointer-events-none absolute inset-0" aria-hidden />
