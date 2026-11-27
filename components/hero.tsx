@@ -8,7 +8,12 @@ import { getSiteSettings } from "@/lib/site-settings";
 import ShinyText from "@/components/shiny-text";
 
 const VIDEO_SRC = "/video/kling_20260912_VIDEO_Cinematic__5034_0.mp4";
+const VIDEO_SRC_MOBILE =
+  "/video/kling_20260912_VIDEO_Cinematic__5034_0_mobile.mp4";
 const LOOP_VIDEO_SRC = "/video/end.mp4";
+const LOOP_VIDEO_SRC_MOBILE = "/video/end_mobile.mp4";
+// Viewports at or below this width get the lighter mobile encodes.
+const MOBILE_MEDIA = "(max-width: 859px)";
 const FALLBACK_GITHUB_URL = "https://github.com/hamza-elmoudden";
 
 export default async function Hero() {
@@ -37,17 +42,18 @@ export default async function Hero() {
       <video
         data-hero-video
         className="pointer-events-none absolute inset-0 z-1 h-full w-full object-cover"
-        src={VIDEO_SRC}
         muted
         playsInline
         preload="auto"
         tabIndex={-1}
         aria-hidden
-      />
+      >
+        <source src={VIDEO_SRC_MOBILE} media={MOBILE_MEDIA} type="video/mp4" />
+        <source src={VIDEO_SRC} type="video/mp4" />
+      </video>
       <video
         data-hero-video-loop
         className="pointer-events-none absolute inset-0 z-1 h-full w-full object-cover opacity-0 transition-opacity duration-700"
-        src={LOOP_VIDEO_SRC}
         muted
         loop
         autoPlay
@@ -55,7 +61,14 @@ export default async function Hero() {
         preload="auto"
         tabIndex={-1}
         aria-hidden
-      />
+      >
+        <source
+          src={LOOP_VIDEO_SRC_MOBILE}
+          media={MOBILE_MEDIA}
+          type="video/mp4"
+        />
+        <source src={LOOP_VIDEO_SRC} type="video/mp4" />
+      </video>
       <div
         className="pointer-events-none absolute inset-0 z-2 bg-ink/55"
         aria-hidden
